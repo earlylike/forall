@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Work Dashboard</title>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#eef0f4; --card:#ffffff; --ink:#1a1f2b; --muted:#667085; --line:#e4e7ec;
+    --accent:#1d6b4f; --on-accent:#ffffff; --danger:#b23a2e; --half:#b7791f; --full:#4338ca;
+    --g1:#4338ca; --g2:#6d28d9; --brand-ink:#4338ca;
+    --shadow:0 4px 20px rgba(16,24,40,.08),0 1px 3px rgba(16,24,40,.06);
+    box-sizing:border-box;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#101217; --card:#1b1e26; --ink:#eceff4; --muted:#9aa3b2; --line:#2b303b;
+      --accent:#58c49a; --on-accent:#0c1a13; --danger:#e8786b; --half:#e0a84a; --full:#a5b4fc;
+      --g1:#3730a3; --g2:#5b21b6; --brand-ink:#a5b4fc;
+      --shadow:0 4px 20px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.35);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#101217; --card:#1b1e26; --ink:#eceff4; --muted:#9aa3b2; --line:#2b303b;
+    --accent:#58c49a; --on-accent:#0c1a13; --danger:#e8786b; --half:#e0a84a; --full:#a5b4fc;
+    --g1:#3730a3; --g2:#5b21b6; --brand-ink:#a5b4fc;
+    --shadow:0 4px 20px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+  *,*::before,*::after{box-sizing:inherit}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Poppins","Noto Sans Devanagari",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+  .wrap{max-width:40rem;margin:0 auto;padding:1rem}
+  h1{font-size:1.5rem;margin:.5rem 0 1rem}
+  h2{font-size:1.1rem;margin:0 0 .75rem}
+  nav{display:flex;gap:.5rem;margin-bottom:1rem}
+  nav button{flex:1;padding:.7rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+  nav button[aria-selected="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem;margin-bottom:1rem}
+  label{display:block;font-weight:600;margin:.8rem 0 .3rem}
+  input[type=text],input[type=date]{width:100%;padding:.65rem;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  .seg{display:flex;gap:.5rem}
+  .seg label{flex:1;margin:0;font-weight:600}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg span{display:block;text-align:center;padding:.65rem;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--bg)}
+  .seg input:checked+span{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .seg input:focus-visible+span,.chk input:focus-visible+span{outline:3px solid var(--ink);outline-offset:2px}
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem}
+  .chk{margin:0;font-weight:500}
+  .chk input{position:absolute;opacity:0;pointer-events:none}
+  .chk span{display:inline-block;padding:.5rem .9rem;border:1px solid var(--line);border-radius:999px;cursor:pointer;background:var(--bg)}
+  .chk input:checked+span{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .btn{font:inherit;font-weight:600;padding:.7rem 1.1rem;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn.danger{background:transparent;color:var(--danger);border-color:var(--danger)}
+  .btn:focus-visible,nav button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .save{width:100%;margin-top:1.1rem;font-size:1.05rem}
+  .row{display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem}
+  .row input{flex:1}
+  .hint{color:var(--muted);font-size:.92rem;margin:.3rem 0 0}
+  .msg{min-height:1.4rem;margin:.6rem 0 0;font-weight:600;color:var(--accent)}
+  .msg.err{color:var(--danger)}
+  .rec{border-top:1px solid var(--line);padding:.75rem 0;display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}
+  .rec:first-of-type{border-top:0}
+  .tag{display:inline-block;font-size:.8rem;font-weight:700;padding:.1rem .55rem;border-radius:999px;border:1px solid currentColor}
+  .tag.Half{color:var(--half)} .tag.Full{color:var(--full)}
+  .meta{color:var(--muted);font-size:.92rem}
+  .sum{display:grid;grid-template-columns:1fr auto auto;gap:.3rem .9rem;font-size:.95rem}
+  .sum b{font-weight:600}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:50}
+  .dialog{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:1.25rem;width:100%;max-width:24rem}
+  .dialog h2{margin:0 0 .5rem}
+  .dialog p{margin:0 0 1.1rem;color:var(--muted);overflow-wrap:anywhere}
+  .dactions{display:flex;gap:.5rem;justify-content:flex-end}
+  .btn.dangerfill{background:var(--danger);border-color:var(--danger);color:#fff}
+  .btn{min-height:44px}
+  input[type=text],input[type=date],input[type=month]{font-size:16px;min-width:0;min-height:44px}
+  input[type=date],input[type=month]{-webkit-appearance:none;appearance:none}
+  .meta{overflow-wrap:anywhere}
+  @media (max-width:520px){
+    .wrap{padding:.75rem}
+    .card{padding:.85rem}
+    h1{font-size:1.3rem}
+    .row{flex-wrap:wrap}
+    .row input{flex:1 1 100%}
+    .row .btn{flex:1}
+    .rec{flex-direction:column}
+    .rec .btn{width:100%}
+    .dactions .btn{flex:1}
+    .seg span{padding:.8rem .4rem}
+  }
+  .ibtn{flex:none;width:44px;height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;cursor:pointer}
+  .ibtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ibtn.del{color:var(--danger);border-color:var(--danger)}
+  .ibtn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .row.erow{flex-wrap:nowrap}
+  .row.erow input{flex:1 1 auto}
+  .row.erow{align-items:center}
+  .ename{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-weight:600}
+  #emps{display:flex;flex-direction:column;gap:.6rem}
+  #emps .row.erow{margin:0;gap:.65rem;padding:.55rem .65rem;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);background:rgba(127,127,127,.08);background:color-mix(in srgb,var(--accent) 10%,var(--card))}
+  #emps .row.erow:nth-child(even){background:rgba(127,127,127,.14);background:color-mix(in srgb,var(--accent) 18%,var(--card))}
+  button.arow{width:100%;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+  button.arow:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .arow .atotal{flex:none;font-size:.9rem;font-weight:600;color:var(--accent)}
+  .ahead{margin:1.1rem 0 .4rem;padding-top:.9rem;border-top:1px solid var(--line)}
+  .hrow{display:flex;align-items:center;gap:.5rem;padding:.25rem 0}
+  .hrow .hd{flex:1 1 auto;min-width:0}
+  .hrow .ibtn{width:36px;height:36px}
+  .pacts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
+  .pacts .btn{flex:1 1 8rem;text-align:center;text-decoration:none;display:inline-block}
+  .th{display:flex;align-items:center;gap:.5rem}
+  .th svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--danger)}
+  #tlist{display:flex;flex-direction:column;gap:.6rem}
+  .trow{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem;padding:.55rem .65rem;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:12px;background:rgba(127,127,127,.08);background:color-mix(in srgb,var(--danger) 8%,var(--card))}
+  .trow .avatar{background:var(--muted)}
+  .trow .tinfo{flex:1 1 9rem;min-width:0}
+  .trow .tname{font-weight:600;overflow-wrap:anywhere}
+  .trow .tmeta{font-size:.85rem;color:var(--muted)}
+  .trow .btn{padding:.45rem .8rem}
+  #tlist .ibtn{background:var(--card)}
+  #tempty{margin-top:.8rem}
+  .count{color:var(--muted);font-weight:500;font-size:.95rem}
+  #alist{display:flex;flex-direction:column;gap:.6rem}
+  .arow{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);background:rgba(127,127,127,.08);background:color-mix(in srgb,var(--accent) 10%,var(--card))}
+  .arow:nth-child(even){background:rgba(127,127,127,.14);background:color-mix(in srgb,var(--accent) 18%,var(--card))}
+  .arow .num{flex:none;min-width:1.4rem;color:var(--muted);font-weight:600;text-align:right}
+  .avatar{flex:none;width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:1.05rem}
+  #emps .ibtn{background:var(--card)}
+  .rbody{flex:1;min-width:0;width:100%}
+  .rl{display:grid;grid-template-columns:6rem 1fr;gap:.5rem;padding:.2rem 0;align-items:start}
+  .rl .k{color:var(--muted);font-size:.92rem}
+  .rl span:not(.k),.rl ul{overflow-wrap:anywhere}
+  .rl .tag{justify-self:start}
+  .names{margin:0;padding-left:1.1rem}
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.duties{width:100%;min-width:30rem;border-collapse:collapse;font-size:.95rem}
+  .duties th,.duties td{text-align:left;padding:.6rem .5rem;border-bottom:1px solid var(--line);vertical-align:top}
+  .duties th{color:var(--muted);font-weight:600;font-size:.88rem;white-space:nowrap}
+  .duties td:first-child{white-space:nowrap}
+  .duties .names{list-style:decimal;padding:0 0 0 1.25rem;margin:0}
+  .duties .tag{white-space:nowrap}
+  .duties .ibtn{width:36px;height:36px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .duties td{transition:background-color .3s}
+  .duties tr.hl td{background:rgba(255,200,0,.35);background:color-mix(in srgb,var(--accent) 30%,transparent)}
+  .acts{display:flex;gap:.4rem}
+  .dialog{max-height:90vh;overflow-y:auto}
+  .tscroll{border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  table.duties{border-collapse:separate;border-spacing:0}
+  .duties thead th{background:var(--accent);color:var(--on-accent);font-size:.82rem;font-weight:700;letter-spacing:.03em;padding:.8rem .75rem;border-bottom:0}
+  .duties td{padding:.75rem;border-bottom:1px solid var(--line)}
+  .duties tbody tr:last-child td{border-bottom:0}
+  .duties tbody tr:nth-child(even){background:rgba(127,127,127,.08);background:color-mix(in srgb,var(--accent) 7%,transparent)}
+  .duties tbody tr:hover{background:rgba(127,127,127,.14);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+  .duties .names li{padding:.1rem 0}
+  .duties .names li::marker{color:var(--accent);font-weight:700}
+  .duties .tag{padding:.25rem .75rem;font-size:.8rem;font-weight:700;background:color-mix(in srgb,currentColor 14%,transparent)}
+  .duties .ibtn{border-radius:50%}
+  .duties .ibtn:hover{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  .duties .ibtn.del:hover{background:color-mix(in srgb,var(--danger) 16%,transparent)}
+  table.duties{width:100%;min-width:0;font-size:.8rem;line-height:1.35}
+  .duties thead th{font-size:.7rem;padding:.55rem .4rem;letter-spacing:.02em}
+  .duties td{padding:.5rem .4rem}
+  .duties th:first-child,.duties td:first-child{padding-left:.6rem}
+  .duties th:last-child,.duties td:last-child{padding-right:.6rem}
+  .duties td{overflow-wrap:anywhere}
+  .duties td:first-child{white-space:nowrap;overflow-wrap:normal}
+  .duties .names{padding-left:1rem}
+  .duties .names li{padding:0}
+  .duties .tag{padding:.12rem .5rem;font-size:.7rem;white-space:nowrap}
+  .duties .acts{gap:.25rem}
+  .duties .ibtn{width:30px;height:30px}
+  .duties .ibtn svg{width:15px;height:15px}
+  button,input,select,textarea{font-family:inherit}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .chk input:checked+span{background:#2563eb;color:#fff;border-color:#2563eb}
+  input[type=number]{width:100%;padding:.65rem;font-size:16px;min-height:44px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  .rrow{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+  .rrow>div{min-width:0}
+  .ac{position:relative}
+  .aclist{list-style:none;margin:.25rem 0 0;padding:.25rem;position:absolute;left:0;right:0;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.18);max-height:14rem;overflow-y:auto}
+  .aclist li{padding:.6rem .7rem;border-radius:8px}
+  .aclist li[role=option]{cursor:pointer}
+  .aclist li[role=option]:hover,.aclist li[aria-selected="true"]{background:#2563eb;color:#fff}
+  .aclist li.none{color:var(--muted)}
+  .bsub{color:var(--muted);font-size:.9rem;margin:1rem 0 .5rem}
+  .duties th.amt,.duties td.amt{text-align:right;white-space:nowrap}
+  .final{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:.9rem;padding:.9rem 1rem;border-radius:12px;background:var(--accent);color:var(--on-accent);font-weight:700}
+  .final small{font-weight:500;opacity:.9}
+  .final .tot{font-size:1.4rem;white-space:nowrap}
+  .duties th.cnt,.duties td.cnt{text-align:center;width:3.5rem}
+  .sum2{margin-top:1rem;border-top:1px solid var(--line);padding-top:.6rem;font-size:.8rem}
+  .s2row{display:grid;grid-template-columns:1fr repeat(3,1.9rem);gap:.4rem;align-items:center;padding:.2rem 0}
+  .s2head{color:var(--muted);font-weight:600;font-size:.7rem}
+  .s2head span:not(:first-child){text-align:center}
+  .s2row .nm{overflow-wrap:anywhere}
+  .s2row .c{display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;border:1.5px solid currentColor;font-weight:700;font-size:.75rem;justify-self:center}
+  .c.fd{color:var(--full)}
+  .c.hd{color:var(--half)}
+  .c.tot{color:#2563eb}
+  .c.zero{opacity:.35}
+  .s2row .c{border-color:transparent;color:#fff}
+  .s2row .c.fd{background:#1a7f56;color:#fff}
+  .s2row .c.hd{background:#b36a00;color:#fff}
+  .s2row .c.tot{background:#2563eb;color:#fff}
+  .s2row .c.zero{opacity:.35}
+  .bname{text-align:center;font-weight:700;font-size:1.05rem;margin:1rem 0 .5rem;overflow-wrap:anywhere}
+  .bsum{margin-top:.9rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:.9rem;font-variant-numeric:tabular-nums}
+  .bs-t{font-weight:700;margin-top:.55rem}
+  .bs-t:first-child{margin-top:0}
+  .bs-v{color:var(--muted);overflow-wrap:anywhere}
+  [hidden]{display:none!important}
+
+  /* ===== Redesign: gradient header, soft grey page, white rounded cards, floating save ===== */
+  body{background:var(--bg)}
+  .hero{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;padding:calc(1.4rem + env(safe-area-inset-top,0px)) 0 4rem;border-radius:0 0 28px 28px;box-shadow:0 8px 24px rgba(67,56,202,.25)}
+  .hero-in{max-width:40rem;margin:0 auto;padding:0 1rem}
+  .hero h1{margin:0;font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:#fff;text-align:center}
+  .wrap{margin-top:-2.6rem;padding-bottom:1.5rem;position:relative}
+  nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + .5rem);z-index:40}
+  nav button{border:0;border-radius:16px;background:var(--card);color:var(--ink);box-shadow:0 6px 18px rgba(16,24,40,.16),0 1px 3px rgba(16,24,40,.1)}
+  nav button[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+  .card{background:var(--card);border:0;border-radius:20px;box-shadow:var(--shadow);padding:1.25rem}
+  .dialog{border:0;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+  h2{font-weight:600}
+  input[type=text],input[type=date],input[type=month],input[type=number]{background:var(--bg);border:1px solid transparent;border-radius:14px}
+  input:focus{outline:2px solid var(--g2);outline-offset:1px}
+  .seg span{border:1px solid transparent;border-radius:14px;background:var(--bg)}
+  .chk span{border:1px solid transparent;background:var(--bg)}
+  .seg input:checked+span,.chk input:checked+span{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+  .btn{border:1px solid transparent;border-radius:16px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 4px 12px rgba(67,56,202,.28)}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);box-shadow:none}
+  .btn.danger{background:transparent;color:var(--danger);border-color:var(--danger);box-shadow:none}
+  .btn.dangerfill{background:var(--danger);border-color:var(--danger);color:#fff;box-shadow:none}
+  .msg{color:var(--brand-ink)}
+  .msg.err{color:var(--danger)}
+  .ibtn{border-radius:12px}
+  .duties .ibtn{border-radius:50%}
+  #emps .row.erow,#emps .row.erow:nth-child(even),.arow,.arow:nth-child(even){border:0;border-radius:16px;box-shadow:none;background:var(--bg)}
+  .arow{padding:.65rem .8rem}
+  .arow .atotal{color:var(--brand-ink)}
+  .avatar{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff}
+  .trow{border:0;border-left:0;border-radius:16px}
+  .tscroll{border:0;border-radius:16px;box-shadow:var(--shadow)}
+  .duties thead th{background:var(--g1);color:#fff}
+  .duties tbody tr:nth-child(even){background:color-mix(in srgb,var(--muted) 7%,transparent)}
+  .duties tbody tr:hover{background:color-mix(in srgb,var(--muted) 13%,transparent)}
+  @keyframes dutyflash{0%,100%{background:transparent}50%{background:color-mix(in srgb,#fbbf24 65%,transparent)}}
+  .duties tr.hl td{background:transparent;animation:dutyflash .7s ease-in-out 3}
+  @media (prefers-reduced-motion:reduce){.duties tr.hl td{animation:none;background:color-mix(in srgb,#fbbf24 65%,transparent)}}
+  .duties .names li::marker{color:var(--muted)}
+  .duties .ibtn:hover{background:color-mix(in srgb,var(--muted) 18%,transparent)}
+  .final{border-radius:16px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff}
+  .bsum{border:0;border-radius:16px;background:var(--bg)}
+  .aclist{border:0;border-radius:16px;box-shadow:0 10px 28px rgba(16,24,40,.2)}
+  .aclist li{border-radius:12px}
+  .aclist li[role=option]:hover{background:var(--bg);color:var(--ink)}
+  .aclist li[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+  .c.tot{color:#475569}
+  .s2row .c.fd{background:#4338ca;color:#fff}
+  .s2row .c.tot{background:#475569;color:#fff}
+  .bs-t label{margin:0;display:inline;font:inherit;color:inherit}
+  input.pendin{width:9rem;max-width:100%;padding:.65rem;font:inherit;font-size:16px;font-weight:700;text-align:right;min-height:44px;color:var(--ink);background:var(--bg);border:1px solid transparent;border-radius:14px}
+  input.pendin::placeholder{font-weight:400;color:var(--muted);opacity:1}
+  #bout{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 5.5rem)}
+  #details h2{margin:0}
+  .acc{width:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0;margin:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:44px}
+  .acc svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+  .acc[aria-expanded="true"] .chev{transform:rotate(180deg)}
+  .acc:focus-visible{outline:2px solid var(--g2);outline-offset:4px;border-radius:8px}
+  #dbody{margin-top:.8rem}
+  #details .duties th.cnt,#details .duties td.cnt{width:4.5rem}
+  .dtot{margin-top:.9rem;padding:.8rem 1rem;border-radius:16px;background:var(--bg);display:flex;flex-direction:column;gap:.35rem;font-variant-numeric:tabular-nums}
+  .dtot>div{display:flex;justify-content:space-between;gap:1rem}
+  .dtot span{font-weight:600}
+  .dtot b{font-weight:700}
+  .dtot .dgrand{margin-top:.2rem;padding:.65rem .9rem;border-radius:14px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;font-size:1.1rem}
+  .arow{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 5.5rem)}
+  @keyframes advflash{0%,100%{background:var(--bg);box-shadow:0 0 0 0 transparent}50%{background:color-mix(in srgb,#fbbf24 60%,var(--bg));box-shadow:0 0 0 3px #f59e0b}}
+  .arow.flash,.erow.flash{animation:advflash .7s ease-in-out 3}
+  .erow{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 5.5rem)}
+  @media (prefers-reduced-motion:reduce){.arow.flash,.erow.flash{animation:none;background:color-mix(in srgb,#fbbf24 60%,var(--bg));box-shadow:0 0 0 3px #f59e0b}}
+  .bsum{margin-top:.6rem;padding:0 .15rem;border:0;border-radius:0;background:transparent;font-size:1rem}
+  .brow{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.85rem 0;border-bottom:1px solid var(--line)}
+  .bl{color:var(--muted);font-size:1.02rem;min-width:0}
+  label.bl{margin:0;font-weight:400}
+  .bv{text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .bv b{font-weight:700;color:var(--ink)}
+  .bv .eq{color:var(--muted);font-size:.9rem}
+  /* Add Duty heading (from Duty_log file): small kicker above, gradient bar on the left */
+  #addh{position:relative;display:block;margin:.1rem 0 1.2rem;padding-left:.95rem;font-size:1.55rem;font-weight:800;line-height:1.15}
+  #addh .kick{display:block;margin-bottom:.2rem;font-size:.65rem;font-weight:700;letter-spacing:.22em;color:var(--g2)}
+  #addh::after{content:"";position:absolute;left:0;top:.1rem;bottom:.05rem;width:5px;border-radius:5px;background:linear-gradient(180deg,var(--g1),var(--g2) 60%,#ec4899)}
+  @media (prefers-color-scheme:dark){#addh .kick{color:#c4b5fd}}
+  :lang(mr) #addh .kick,:lang(hi) #addh .kick{letter-spacing:0;font-size:.8rem}
+
+  /* All employees details bar: tinted banner with people icon, turns gradient when opened */
+  .acc{gap:.7rem;padding:.55rem .65rem;border-radius:18px;background:color-mix(in srgb,var(--g2) 9%,var(--card));border:1px solid color-mix(in srgb,var(--g2) 22%,transparent);transition:background .2s,color .2s}
+  .acc-ic{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--g1),var(--g2));box-shadow:0 4px 10px rgba(67,56,202,.3)}
+  .acc .acc-ic svg{width:21px;height:21px;stroke:#fff;stroke-width:2}
+  .acc-t{flex:1;min-width:0;font-size:1.1rem;font-weight:700}
+  .acc .chev{box-sizing:content-box;width:18px;height:18px;padding:6px;border-radius:50%;background:var(--card);color:var(--brand-ink);box-shadow:0 2px 6px rgba(16,24,40,.18)}
+  .acc[aria-expanded="true"]{background:linear-gradient(135deg,var(--g1),var(--g2));border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(67,56,202,.3)}
+  .acc[aria-expanded="true"] .acc-ic{background:rgba(255,255,255,.2);box-shadow:none}
+
+  /* Bill employee name (from Duty_log file): big bold name centred between two fading violet lines with dot ends */
+  .bname{display:flex;align-items:center;justify-content:center;gap:.8rem;width:auto;max-width:none;margin:1.1rem 0 1rem;padding:0;font-size:1.4rem;font-weight:800;color:var(--ink);background:none;border:0;border-radius:0;box-shadow:none;overflow-wrap:anywhere;--bc:#6d28d9}
+  .bname::before,.bname::after{content:"";flex:1;min-width:1.5rem;height:10px;background:radial-gradient(circle,var(--bc) 0 4px,transparent 4.6px) right center/10px 10px no-repeat,linear-gradient(90deg,transparent,var(--bc)) left center/calc(100% - 12px) 2px no-repeat}
+  .bname::after{transform:scaleX(-1)}
+  @media (prefers-color-scheme:dark){.bname{--bc:#a78bfa}}
+
+  /* Saved duties heading: speech-bubble label with a little tail pointing down at the table */
+  .savedh{display:flex;align-items:center;margin:0 0 1.4rem .1rem;padding:0;font-size:1.15rem;font-weight:800}
+  .savedh-ic{display:none}
+  .savedh span[data-i18n]{position:relative;display:inline-block;padding:.5rem 1.2rem;border-radius:18px 18px 18px 4px;color:#fff;background:linear-gradient(135deg,#0ea5e9,#6366f1);box-shadow:0 6px 14px rgba(79,70,229,.3)}
+  .savedh span[data-i18n]::after{content:"";position:absolute;left:14px;top:100%;width:0;height:0;border-left:0 solid transparent;border-right:14px solid transparent;border-top:12px solid #3885ed}
+
+  /* Advance tab "All employees" heading: gradient people badge, bold title, employee count pill on the right */
+  .advh{display:flex;align-items:center;gap:.7rem;margin:0 0 .9rem;padding:.55rem .65rem;border-radius:18px;background:color-mix(in srgb,#f59e0b 12%,var(--card));border:1px solid color-mix(in srgb,#f59e0b 32%,transparent)}
+  .advh-ic{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fbbf24,#ea580c);box-shadow:0 4px 10px rgba(234,88,12,.35)}
+  .advh-ic svg{width:21px;height:21px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .advh-t{flex:1;min-width:0;font-size:1.2rem;font-weight:800}
+  .advh .count{flex:none;min-width:2rem;padding:.15rem .7rem;border-radius:999px;text-align:center;font-size:.95rem;font-weight:800;color:#431407;background:linear-gradient(135deg,#fde68a,#fbbf24);box-shadow:0 2px 6px rgba(234,88,12,.25)}
+  .advh .count:empty{display:none}
+
+  /* Settings "Rates" heading: switch-style pill - white knob with a rupee symbol at the left end of a warm gradient track */
+  .ratesh{display:inline-flex;align-items:center;gap:.7rem;margin:.2rem 0 1.2rem;padding:5px 1.5rem 5px 5px;border-radius:999px;background:linear-gradient(90deg,#f59e0b,#f43f5e);box-shadow:0 6px 16px rgba(244,63,94,.35),inset 0 2px 4px rgba(0,0,0,.18)}
+  .ratesh-ic{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+  .ratesh-ic svg{width:24px;height:24px;fill:none;stroke:#e11d48;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+  .ratesh-t{font-size:1.25rem;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .ratesh-orn{display:none}
+
+  /* No zooming: no double-tap zoom, no pinch zoom */
+  html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  button,input,label,summary,a{touch-action:manipulation}
+
+  /* Settings "Trash" heading: red hazard-stripe edge, red bin badge, bold title, item-count pill on the right */
+  .th{position:relative;overflow:hidden;gap:.7rem;margin:0 0 1rem;padding:.55rem .7rem .55rem 1.5rem;border-radius:16px;font-size:1.25rem;font-weight:800;background:color-mix(in srgb,var(--danger) 9%,var(--card));border:1px solid color-mix(in srgb,var(--danger) 28%,transparent)}
+  .th::before{content:"";position:absolute;left:0;top:0;bottom:0;width:12px;background:repeating-linear-gradient(45deg,#dc2626 0 6px,#fecaca 6px 12px)}
+  .th svg{box-sizing:content-box;flex:none;width:22px;height:22px;padding:8px;border-radius:12px;color:#fff;background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 4px 10px rgba(185,28,28,.35)}
+  .th span[data-i18n]{flex:1;min-width:0}
+  .th .count{flex:none;min-width:2rem;padding:.15rem .7rem;border-radius:999px;text-align:center;font-size:.95rem;font-weight:800;color:#fff;background:#dc2626}
+  .th .count:empty{display:none}
+
+  /* Settings "Currently Working Employees" heading: person-with-tick badge with a live pulsing dot, bold title, cyan-blue theme */
+  .workh{display:flex;align-items:center;gap:.8rem;margin:0 0 1rem;padding:.6rem .8rem .6rem .65rem;border-radius:18px;background:color-mix(in srgb,#0ea5e9 9%,var(--card));border:1px solid color-mix(in srgb,#0ea5e9 28%,transparent)}
+  .workh-ic{position:relative;flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#06b6d4,#3b82f6);box-shadow:0 4px 10px rgba(59,130,246,.35)}
+  .workh-ic svg{width:25px;height:25px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .workh-ic::after{content:"";position:absolute;right:-4px;top:-4px;width:11px;height:11px;border-radius:50%;background:#f97316;border:2px solid var(--card);animation:workpulse 1.6s ease-in-out infinite}
+  @keyframes workpulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.55)}50%{box-shadow:0 0 0 6px rgba(249,115,22,0)}}
+  @media (prefers-reduced-motion:reduce){.workh-ic::after{animation:none}}
+  .workh-t{flex:1;min-width:0;font-size:1.2rem;font-weight:800;line-height:1.25;color:var(--ink)}
+
+  /* Settings "Select Language" heading: globe badge, bold title, little "A" and "अ" letter chips on the right */
+  .langh{display:flex;align-items:center;gap:.75rem;margin:0 0 1rem;padding:.55rem .75rem .55rem .6rem;border-radius:18px;background:color-mix(in srgb,#d946ef 9%,var(--card));border:1px solid color-mix(in srgb,#d946ef 26%,transparent)}
+  .langh-ic{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ec4899,#7c3aed);box-shadow:0 4px 10px rgba(168,85,247,.4)}
+  .langh-ic svg{width:25px;height:25px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .langh-t{flex:1;min-width:0;font-size:1.2rem;font-weight:800}
+  .langh-chips{flex:none;display:flex;gap:.3rem}
+  .langh-chips i{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;font-style:normal;font-size:.95rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#ec4899,#7c3aed);box-shadow:0 2px 6px rgba(124,58,237,.3)}
+  .langh-chips i:last-child{transform:rotate(6deg);background:linear-gradient(135deg,#f59e0b,#ec4899)}
+  .langh-chips i:first-child{transform:rotate(-6deg)}
+
+  /* Devanagari: letter-spacing breaks conjunct joining, so switch it off for Marathi/Hindi */
+  :lang(mr) .hero h1,:lang(hi) .hero h1,:lang(mr) .duties thead th,:lang(hi) .duties thead th{letter-spacing:0}
+  @media (max-width:520px){
+    .card{padding:1.05rem}
+    .hero h1{font-size:1.4rem}
+  }
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-in"><h1 data-i18n="title">Work Dashboard</h1></div></header>
+<div class="wrap">
+  <nav role="tablist">
+    <button id="t-duty" role="tab" aria-selected="true" type="button" data-i18n="tab_duty">Duty</button>
+    <button id="t-adv" role="tab" aria-selected="false" type="button" data-i18n="tab_adv">Advance</button>
+    <button id="t-set" role="tab" aria-selected="false" type="button" data-i18n="tab_set">Settings</button>
+  </nav>
+
+  <section id="p-duty">
+    <div class="card">
+      <h2 id="addh"><span class="kick" data-i18n="new_entry">NEW ENTRY</span><span data-i18n="add_duty">Add Duty</span></h2>
+      <label for="date" data-i18n="date">Date</label>
+      <input type="date" id="date">
+      <label for="loc" data-i18n="location">Location</label>
+      <input type="text" id="loc" list="locs" data-i18n-ph="loc_ph" placeholder="Where was the duty?" autocomplete="off">
+      <datalist id="locs"></datalist>
+      <label id="dl" data-i18n="duty_type">Duty type</label>
+      <div class="seg" role="radiogroup" aria-labelledby="dl">
+        <label><input type="radio" name="duty" value="Full" checked><span data-i18n="full_day">Full Day</span></label>
+        <label><input type="radio" name="duty" value="Half"><span data-i18n="half_day">Half Day</span></label>
+      </div>
+      <label id="wl" data-i18n="who">Who did the duty</label>
+      <div class="chips" id="who" role="group" aria-labelledby="wl"></div>
+      <p class="hint" id="nowho" data-i18n="no_emp_first" hidden>No employees yet. Add names in Settings first.</p>
+      <button class="btn save" id="save" type="button" data-i18n="save_duty">Save duty</button>
+      <p class="msg" id="msg" aria-live="polite"></p>
+    </div>
+
+    <div class="card">
+      <h2 class="savedh"><span class="savedh-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.3 1.3L7 5M3.5 12l1.3 1.3L7 11M3.5 18l1.3 1.3L7 17"/></svg></span><span data-i18n="saved_duties">Saved duties</span></h2>
+      <div id="list"></div>
+      <div id="sum" class="sum2"></div>
+    </div>
+
+    <div class="card" id="bill">
+      <h2 class="savedh"><span data-i18n="bill">Make A Bill</span></h2>
+      <label for="bname" style="margin-top:0" data-i18n="bill_search">Enter Employee Name</label>
+      <div class="ac">
+        <input type="text" id="bname" data-i18n-ph="bname_ph" placeholder="Type employee name" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="blist" aria-autocomplete="list">
+        <ul id="blist" class="aclist" role="listbox" hidden></ul>
+      </div>
+      <div id="bout"></div>
+    </div>
+
+    <div class="card" id="details">
+      <h2><button class="acc" id="dtoggle" type="button" aria-expanded="false" aria-controls="dbody"><span class="acc-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.2 4.5 2.4 4.5 5"/></svg></span><span class="acc-t" data-i18n="emp_details">All employees details</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
+      <div id="dbody" hidden><div id="dout"></div></div>
+    </div>
+  </section>
+
+  <section id="p-set" hidden>
+    <div class="card">
+      <h2 class="ratesh"><span class="ratesh-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 5h10M7 9h10M7 5h3.2a3.5 3.5 0 010 7H7l7 7"/></svg></span><span class="ratesh-t" data-i18n="rates">Rates</span><span class="ratesh-orn" aria-hidden="true"></span></h2>
+      <div class="rrow">
+        <div>
+          <label for="rfull" style="margin-top:0" data-i18n="full_rate">Full Day (Rs.)</label>
+          <input type="number" id="rfull" inputmode="numeric" min="0" step="1">
+        </div>
+        <div>
+          <label for="rhalf" style="margin-top:0" data-i18n="half_rate">Half Day (Rs.)</label>
+          <input type="number" id="rhalf" inputmode="numeric" min="0" step="1">
+        </div>
+      </div>
+      <button class="btn save" id="rsave" type="button" data-i18n="save_rates">Save rates</button>
+      <p class="msg" id="rmsg" aria-live="polite"></p>
+    </div>
+
+    <div class="card">
+      <h2 class="workh"><span class="workh-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.4"/><path d="M3.5 20c0-3.6 2.9-6.4 6.5-6.4 1.3 0 2.4.3 3.4 1"/><path d="M15 18l2.2 2.2L21 16"/></svg></span><span class="workh-t" data-i18n="emp_working">Currently Working Employees</span></h2>
+      <div id="emps"></div>
+      <div class="row" style="margin-top:.9rem">
+        <input type="text" id="newname" data-i18n-ph="new_name" data-i18n-aria="new_name" placeholder="New employee name" autocomplete="off" aria-label="New employee name">
+        <button class="btn" id="add" type="button" data-i18n="add">Add</button>
+      </div>
+      <p class="msg" id="smsg" aria-live="polite"></p>
+      <p class="hint" data-i18n="hint_emps">Renaming also updates the name on past duties. Deleting an employee moves him and all of his duties and advances to Trash below.</p>
+    </div>
+    <div class="card" id="trashcard">
+      <h2 class="th"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg> <span data-i18n="trash">Trash</span> <span class="count" id="tcount"></span></h2>
+      <div id="tlist"></div>
+      <p class="msg" id="tmsg" aria-live="polite"></p>
+      <button class="btn danger" id="tempty" type="button" data-i18n="empty_trash" hidden>Empty trash</button>
+      <p class="hint" data-i18n="hint_trash">Deleted employees go here with all of their duties and advances. Restore them any time, or delete them permanently.</p>
+    </div>
+    <div class="card" id="langcard">
+      <h2 class="langh"><span class="langh-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.4 4 5.5 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.5-4-9s1.4-6.6 4-9z"/></svg></span><span class="langh-t">Select Language</span><span class="langh-chips" aria-hidden="true"><i>A</i><i>अ</i></span></h2>
+      <div class="seg" role="radiogroup" aria-label="Select Language">
+        <label><input type="radio" name="lang" value="mr"><span>मराठी</span></label>
+        <label><input type="radio" name="lang" value="hi"><span>हिंदी</span></label>
+        <label><input type="radio" name="lang" value="en"><span>English</span></label>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-adv" hidden>
+    <div class="card">
+      <h2 class="advh"><span class="advh-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.2 4.5 2.4 4.5 5"/></svg></span><span class="advh-t" data-i18n="all_emps">All employees</span><span class="count" id="acount"></span></h2>
+      <p class="hint" style="margin:0 0 .8rem" data-i18n="tap_name">Tap a name to add an advance.</p>
+      <div id="alist"></div>
+      <p class="msg" id="advmsg" aria-live="polite"></p>
+    </div>
+  </section>
+</div>
+
+<div id="emodal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="et">
+  <div class="dialog">
+    <h2 id="et" data-i18n="upd_duty">Update duty</h2>
+    <label for="edate" style="margin-top:0" data-i18n="date">Date</label>
+    <input type="date" id="edate">
+    <label for="eloc" data-i18n="location">Location</label>
+    <input type="text" id="eloc" list="locs" autocomplete="off">
+    <label id="edl" data-i18n="duty_type">Duty type</label>
+    <div class="seg" role="radiogroup" aria-labelledby="edl">
+      <label><input type="radio" name="eduty" value="Full"><span data-i18n="full_day">Full Day</span></label>
+      <label><input type="radio" name="eduty" value="Half"><span data-i18n="half_day">Half Day</span></label>
+    </div>
+    <label id="ewl" data-i18n="who">Who did the duty</label>
+    <div class="chips" id="ewho" role="group" aria-labelledby="ewl"></div>
+    <p class="msg err" id="emsg" aria-live="polite"></p>
+    <div class="dactions">
+      <button class="btn ghost" id="ecancel" type="button" data-i18n="cancel">Cancel</button>
+      <button class="btn" id="esave" type="button" data-i18n="save_changes">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<div id="amodal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="at">
+  <div class="dialog">
+    <h2 id="at" data-i18n="advance">Advance</h2>
+    <label for="adate" style="margin-top:0" data-i18n="date">Date</label>
+    <input type="date" id="adate">
+    <label for="aamt" data-i18n="amount">Amount (Rs.)</label>
+    <input type="number" id="aamt" inputmode="numeric" min="1" step="1" data-i18n-ph="amount_ph" placeholder="e.g. 500">
+    <p class="msg err" id="amsg" aria-live="polite"></p>
+    <div class="dactions">
+      <button class="btn ghost" id="acancel" type="button" data-i18n="cancel">Cancel</button>
+      <button class="btn" id="asave" type="button" data-i18n="save_adv">Save advance</button>
+    </div>
+    <div class="ahead" id="ahead" hidden><strong data-i18n="prev_adv">Previous advances</strong> <span class="count" id="atot"></span></div>
+    <div id="ahist"></div>
+  </div>
+</div>
+
+<div id="nmodal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="nt">
+  <div class="dialog">
+    <h2 id="nt" data-i18n="upd_emp_name">Update employee name</h2>
+    <label for="nname" style="margin-top:0" data-i18n="employee_name">Employee name</label>
+    <input type="text" id="nname" autocomplete="off">
+    <div class="rrow" style="margin-top:.9rem">
+      <div>
+        <label for="nfull" style="margin-top:0" data-i18n="full_rate">Full Day (Rs.)</label>
+        <input type="number" id="nfull" inputmode="numeric" min="0" step="1">
+      </div>
+      <div>
+        <label for="nhalf" style="margin-top:0" data-i18n="half_rate">Half Day (Rs.)</label>
+        <input type="number" id="nhalf" inputmode="numeric" min="0" step="1">
+      </div>
+    </div>
+    <p class="hint" style="margin:.6rem 0 0" data-i18n="emp_rate_hint">Leave a rate empty to use the default from the Rates section.</p>
+    <p class="msg err" id="nmsg" aria-live="polite"></p>
+    <div class="dactions">
+      <button class="btn ghost" id="ncancel" type="button" data-i18n="cancel">Cancel</button>
+      <button class="btn" id="nsave" type="button" data-i18n="update">Update</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="mt">
+  <div class="dialog">
+    <h2 id="mt"></h2>
+    <p id="mb"></p>
+    <div class="dactions">
+      <button class="btn ghost" id="mno" type="button" data-i18n="cancel">Cancel</button>
+      <button class="btn" id="myes" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = "dutylog.v1";
+  var state = { employees: [], records: [], advances: [], trash: [] };
+  var mem = null;
+
+  // ---- Languages: English, मराठी, हिंदी ----
+  var I18N = { en: {"title":"Work Dashboard","tab_duty":"Duty","tab_adv":"Advance","tab_set":"Settings","add_duty":"Add Duty","date":"Date","location":"Location","loc_ph":"Where was the duty?","duty_type":"Duty type","full_day":"Full Day","half_day":"Half Day","who":"Who did the duty","no_emp_first":"No employees yet. Add names in Settings first.","save_duty":"Save duty","saved_duties":"Saved duties","bill":"Make A Bill","bill_search":"Enter Employee Name","employee_name":"Employee name","bname_ph":"Type employee name","rates":"Rates","full_rate":"Full Day (Rs.)","half_rate":"Half Day (Rs.)","save_rates":"Save rates","employees":"Employees","new_name":"New employee name","add":"Add","hint_emps":"Renaming also updates the name on past duties. Deleting an employee moves him and all of his duties and advances to Trash below.","trash":"Trash","empty_trash":"Empty trash","hint_trash":"Deleted employees go here with all of their duties and advances. Restore them any time, or delete them permanently.","all_emps":"All employees","tap_name":"Tap a name to add an advance.","upd_duty":"Update duty","cancel":"Cancel","save_changes":"Save changes","advance":"Advance","amount":"Amount (Rs.)","amount_ph":"e.g. 500","save_adv":"Save advance","prev_adv":"Previous advances","upd_emp_name":"Update employee","update":"Update","rs":"Rs.","no_emp_adv":"No employees yet. Add names in Settings.","advance_for":"Advance for {name}","total":"Total","del_adv":"Delete advance","del_adv_q":"Delete advance?","del_adv_body":"{amt} on {date} will be deleted. This can’t be undone.","delete":"Delete","choose_date":"Choose a date.","enter_location":"Enter a location.","select_emp":"Select at least one employee.","enter_amount":"Enter an amount greater than 0.","adv_saved":"Advance of {amt} saved for {name}.","full_clash":"{name} already has a Full Day on this date. Only one Full Day is allowed per employee per day.","half_clash":"{name} already has a Full Day on this date, so a Half Day can’t be added.","saved":"Saved.","saved_blocked":"Saved for now, but this browser blocked storage, so it may be lost when you close the page.","employee":"Employee","fd":"FD","hd":"HD","duty":"Duty","actions":"Actions","upd_duty_t":"Update this duty","del_duty_t":"Delete this duty","no_duties":"No duties saved yet.","del_duty_q":"Delete this duty?","del_duty_body":"This duty entry will be removed from the log.","upd_duty_q":"Update this duty?","upd_duty_body":"Save your changes to this duty entry?","name_empty":"Name can’t be empty.","no_change":"No change to save.","name_exists":"That name already exists.","upd_name_q":"Update name?","upd_name_body":"Change “{old}” to “{new}”? Past duties will show the new name.","name_updated":"Name updated.","moved_trash":"{name} moved to Trash.","name_clash_restore":"An employee named “{name}” already exists. Rename or delete that one first.","restore_q":"Restore {name}?","restore_body":"He will be added back with {d} and {a}.","restore":"Restore","restored":"{name} restored.","purge_q":"Delete {name} permanently?","purge_body":"All of their duties and advances will be deleted for good. This can’t be undone.","delete_forever":"Delete forever","deleted_perm":"Deleted permanently.","trash_empty":"Trash is empty.","del_perm_t":"Delete permanently","deleted_on":"deleted {date}","empty_trash_q":"Empty Trash?","empty_trash_body":"Everything in Trash will be deleted permanently. This can’t be undone.","trash_emptied":"Trash emptied.","duty_1":"{n} duty","duty_n":"{n} duties","adv_1":"{n} advance","adv_n":"{n} advances","no_emp":"No employees yet.","upd_name":"Update name","del_emp":"Delete employee","move_trash_q":"Move {name} to Trash?","move_trash_body":"This employee and all of their duties and advances will be moved to Trash in Settings. You can restore them later.","move_trash":"Move to Trash","enter_name":"Enter a name.","added":"Added.","no_match":"No matching employee","pdf_nolib":"The PDF tool couldn’t load. Check your connection and reload the page.","half_days":"Half Days","full_days":"Full Days","advanced":"Advanced","final_pay":"Final Payment","fd_hd_count":"{fd} FD, {hd} HD","gen_pdf":"Generate PDF","no_duties_for":"No duties found for {name}.","dl_pdf":"Download PDF","open_pdf":"Open PDF","share":"Share","pdf_ready":"PDF ready. If the download didn’t start, tap Download PDF or Open PDF below.","pdf_fail":"Automatic download didn’t work. Tap Download PDF or Open PDF below, or open this page in Chrome or Safari.","pdf_saved":"PDF saved.","dl_cancel":"Download cancelled.","rates_invalid":"Enter valid amounts for both rates.","upd_rates_q":"Update rates?","upd_rates_body":"Full Day {full} and Half Day {half}. Save these rates?","rates_updated":"Rates updated.","emp_details":"All employees details","pending":"Pending payment","emp_rate_hint":"Leave a rate empty to use the default from the Rates section.","emp_updated":"Employee updated.","upd_emp_rates_body":"Set rates for “{name}”: Full Day {full}, Half Day {half}? Bills for this employee will use these rates.","emp_working":"Currently Working Employees","new_entry":"NEW ENTRY","bill_adv":"Advance paid","bill_net":"Total Bill","final_bill":"Final Bill"},
+    mr: {"title":"वर्क डॅशबोर्ड","tab_duty":"ड्युटी","tab_adv":"उचल","tab_set":"सेटिंग्ज","add_duty":"ड्युटी जोडा","date":"तारीख","location":"ठिकाण","loc_ph":"ड्युटी कुठे होती?","duty_type":"ड्युटीचा प्रकार","full_day":"पूर्ण दिवस","half_day":"अर्धा दिवस","who":"ड्युटी कोणी केली","no_emp_first":"अजून कर्मचारी नाहीत. आधी सेटिंग्जमध्ये नावे जोडा.","save_duty":"ड्युटी जतन करा","saved_duties":"जतन केलेल्या ड्युट्या","bill":"बिल तयार करा","bill_search":"कर्मचाऱ्याचे नाव टाका","employee_name":"कर्मचाऱ्याचे नाव","bname_ph":"कर्मचाऱ्याचे नाव टाइप करा","rates":"दर","full_rate":"पूर्ण दिवस (रु.)","half_rate":"अर्धा दिवस (रु.)","save_rates":"दर जतन करा","employees":"कर्मचारी","new_name":"नवीन कर्मचाऱ्याचे नाव","add":"जोडा","hint_emps":"नाव बदलल्यास जुन्या ड्युट्यांमधील नावही बदलते. कर्मचारी हटवल्यास त्याच्या सर्व ड्युट्या व उचल खालील कचरापेटीत जातात.","trash":"कचरापेटी","empty_trash":"कचरापेटी रिकामी करा","hint_trash":"हटवलेले कर्मचारी त्यांच्या सर्व ड्युट्या व उचलसह येथे येतात. त्यांना केव्हाही परत आणा किंवा कायमचे हटवा.","all_emps":"सर्व कर्मचारी","tap_name":"उचल नोंदवण्यासाठी नावावर टॅप करा.","upd_duty":"ड्युटी बदला","cancel":"रद्द करा","save_changes":"बदल जतन करा","advance":"उचल","amount":"रक्कम (रु.)","amount_ph":"उदा. 500","save_adv":"उचल जतन करा","prev_adv":"आधीची उचल","upd_emp_name":"कर्मचाऱ्याची माहिती अपडेट करा","update":"बदला","rs":"रु.","no_emp_adv":"अजून कर्मचारी नाहीत. सेटिंग्जमध्ये नावे जोडा.","advance_for":"{name} ची उचल","total":"एकूण","del_adv":"उचल हटवा","del_adv_q":"उचल हटवायची?","del_adv_body":"{date} रोजीची {amt} हटवली जाईल. हे परत करता येणार नाही.","delete":"हटवा","choose_date":"तारीख निवडा.","enter_location":"ठिकाण लिहा.","select_emp":"किमान एक कर्मचारी निवडा.","enter_amount":"0 पेक्षा जास्त रक्कम लिहा.","adv_saved":"{name} साठी {amt} उचल जतन झाली.","full_clash":"{name} ची या तारखेला आधीच पूर्ण दिवस ड्युटी आहे. एका कर्मचाऱ्याला एका दिवशी फक्त एक पूर्ण दिवस चालतो.","half_clash":"{name} ची या तारखेला आधीच पूर्ण दिवस ड्युटी आहे, त्यामुळे अर्धा दिवस जोडता येत नाही.","saved":"जतन झाले.","saved_blocked":"सध्या जतन झाले, पण या ब्राउझरने स्टोरेज बंद केले आहे, त्यामुळे पेज बंद केल्यावर माहिती जाऊ शकते.","employee":"कर्मचारी","fd":"पूर्ण","hd":"अर्धा","duty":"ड्युटी","actions":"क्रिया","upd_duty_t":"ही ड्युटी बदला","del_duty_t":"ही ड्युटी हटवा","no_duties":"अजून ड्युट्या जतन केलेल्या नाहीत.","del_duty_q":"ही ड्युटी हटवायची?","del_duty_body":"ही ड्युटीची नोंद नोंदवहीतून काढली जाईल.","upd_duty_q":"ही ड्युटी बदलायची?","upd_duty_body":"या ड्युटीतील बदल जतन करायचे?","name_empty":"नाव रिकामे असू शकत नाही.","no_change":"जतन करण्यासाठी काही बदल नाही.","name_exists":"हे नाव आधीच आहे.","upd_name_q":"नाव बदलायचे?","upd_name_body":"“{old}” हे नाव “{new}” असे बदलायचे? जुन्या ड्युट्यांमध्येही नवीन नाव दिसेल.","name_updated":"नाव बदलले.","moved_trash":"{name} कचरापेटीत हलवले.","name_clash_restore":"“{name}” नावाचा कर्मचारी आधीच आहे. आधी त्याचे नाव बदला किंवा तो हटवा.","restore_q":"{name} परत आणायचे?","restore_body":"{d} आणि {a} सह त्याला परत जोडले जाईल.","restore":"परत आणा","restored":"{name} परत आणले.","purge_q":"{name} कायमचे हटवायचे?","purge_body":"त्याच्या सर्व ड्युट्या व उचल कायमच्या हटवल्या जातील. हे परत करता येणार नाही.","delete_forever":"कायमचे हटवा","deleted_perm":"कायमचे हटवले.","trash_empty":"कचरापेटी रिकामी आहे.","del_perm_t":"कायमचे हटवा","deleted_on":"{date} रोजी हटवले","empty_trash_q":"कचरापेटी रिकामी करायची?","empty_trash_body":"कचरापेटीतील सर्व काही कायमचे हटवले जाईल. हे परत करता येणार नाही.","trash_emptied":"कचरापेटी रिकामी केली.","duty_1":"{n} ड्युटी","duty_n":"{n} ड्युट्या","adv_1":"{n} उचल","adv_n":"{n} उचल","no_emp":"अजून कर्मचारी नाहीत.","upd_name":"नाव बदला","del_emp":"कर्मचारी हटवा","move_trash_q":"{name} ला कचरापेटीत हलवायचे?","move_trash_body":"या कर्मचाऱ्याच्या सर्व ड्युट्या व उचल सेटिंग्जमधील कचरापेटीत हलवल्या जातील. नंतर परत आणता येतील.","move_trash":"कचरापेटीत हलवा","enter_name":"नाव लिहा.","added":"जोडले.","no_match":"असा कर्मचारी सापडला नाही","pdf_nolib":"PDF साधन लोड झाले नाही. इंटरनेट तपासा आणि पेज पुन्हा उघडा.","half_days":"अर्धे दिवस","full_days":"पूर्ण दिवस","advanced":"उचल","final_pay":"अंतिम देय रक्कम","fd_hd_count":"{fd} पूर्ण, {hd} अर्धा","gen_pdf":"PDF तयार करा","no_duties_for":"{name} साठी ड्युट्या सापडल्या नाहीत.","dl_pdf":"PDF डाउनलोड करा","open_pdf":"PDF उघडा","share":"शेअर करा","pdf_ready":"PDF तयार आहे. डाउनलोड सुरू झाले नसेल तर खालील “PDF डाउनलोड करा” किंवा “PDF उघडा” वर टॅप करा.","pdf_fail":"आपोआप डाउनलोड झाले नाही. खालील “PDF डाउनलोड करा” किंवा “PDF उघडा” वर टॅप करा, किंवा हे पेज Chrome किंवा Safari मध्ये उघडा.","pdf_saved":"PDF जतन झाली.","dl_cancel":"डाउनलोड रद्द केले.","rates_invalid":"दोन्ही दरांसाठी योग्य रक्कम लिहा.","upd_rates_q":"दर बदलायचे?","upd_rates_body":"पूर्ण दिवस {full} आणि अर्धा दिवस {half}. हे दर जतन करायचे?","rates_updated":"दर बदलले.","emp_details":"सर्व कर्मचाऱ्यांचा तपशील","pending":"प्रलंबित रक्कम","emp_rate_hint":"दर रिकामा ठेवल्यास ‘दर’ विभागातील सामान्य दर वापरला जाईल.","emp_updated":"कर्मचाऱ्याची माहिती अपडेट केली.","upd_emp_rates_body":"“{name}” साठी दर ठरवायचे: पूर्ण दिवस {full}, अर्धा दिवस {half}? या कर्मचाऱ्याचे बिल या दरांनी होईल.","emp_working":"सध्या कार्यरत कर्मचारी","new_entry":"नवीन नोंद","bill_adv":"दिलेली उचल","bill_net":"एकूण बिल","final_bill":"अंतिम बिल"},
+    hi: {"title":"वर्क डैशबोर्ड","tab_duty":"ड्यूटी","tab_adv":"एडवांस","tab_set":"सेटिंग्स","add_duty":"ड्यूटी जोड़ें","date":"तारीख","location":"जगह","loc_ph":"ड्यूटी कहाँ थी?","duty_type":"ड्यूटी का प्रकार","full_day":"पूरा दिन","half_day":"आधा दिन","who":"ड्यूटी किसने की","no_emp_first":"अभी कोई कर्मचारी नहीं है। पहले सेटिंग्स में नाम जोड़ें।","save_duty":"ड्यूटी सेव करें","saved_duties":"सेव की गई ड्यूटी","bill":"बिल बनाएं","bill_search":"कर्मचारी का नाम दर्ज करें","employee_name":"कर्मचारी का नाम","bname_ph":"कर्मचारी का नाम लिखें","rates":"रेट","full_rate":"पूरा दिन (रु.)","half_rate":"आधा दिन (रु.)","save_rates":"रेट सेव करें","employees":"कर्मचारी","new_name":"नए कर्मचारी का नाम","add":"जोड़ें","hint_emps":"नाम बदलने पर पुरानी ड्यूटी में भी नाम बदल जाता है। कर्मचारी को हटाने पर उसकी सभी ड्यूटी और एडवांस नीचे ट्रैश में चले जाते हैं।","trash":"ट्रैश","empty_trash":"ट्रैश खाली करें","hint_trash":"हटाए गए कर्मचारी अपनी सभी ड्यूटी और एडवांस के साथ यहाँ आते हैं। उन्हें कभी भी वापस लाएँ या हमेशा के लिए हटा दें।","all_emps":"सभी कर्मचारी","tap_name":"एडवांस जोड़ने के लिए नाम पर टैप करें।","upd_duty":"ड्यूटी बदलें","cancel":"रद्द करें","save_changes":"बदलाव सेव करें","advance":"एडवांस","amount":"राशि (रु.)","amount_ph":"जैसे 500","save_adv":"एडवांस सेव करें","prev_adv":"पिछले एडवांस","upd_emp_name":"कर्मचारी की जानकारी अपडेट करें","update":"बदलें","rs":"रु.","no_emp_adv":"अभी कोई कर्मचारी नहीं है। सेटिंग्स में नाम जोड़ें।","advance_for":"{name} का एडवांस","total":"कुल","del_adv":"एडवांस हटाएँ","del_adv_q":"एडवांस हटाएँ?","del_adv_body":"{date} का {amt} हटा दिया जाएगा। इसे वापस नहीं किया जा सकता।","delete":"हटाएँ","choose_date":"तारीख चुनें।","enter_location":"जगह लिखें।","select_emp":"कम से कम एक कर्मचारी चुनें।","enter_amount":"0 से ज़्यादा राशि लिखें।","adv_saved":"{name} के लिए {amt} का एडवांस सेव हो गया।","full_clash":"{name} की इस तारीख पर पहले से पूरे दिन की ड्यूटी है। एक कर्मचारी के लिए एक दिन में केवल एक पूरा दिन मान्य है।","half_clash":"{name} की इस तारीख पर पहले से पूरे दिन की ड्यूटी है, इसलिए आधा दिन नहीं जोड़ सकते।","saved":"सेव हो गया।","saved_blocked":"अभी सेव हुआ, लेकिन इस ब्राउज़र ने स्टोरेज रोक दिया है, इसलिए पेज बंद करने पर जानकारी जा सकती है।","employee":"कर्मचारी","fd":"पूरा","hd":"आधा","duty":"ड्यूटी","actions":"क्रियाएँ","upd_duty_t":"यह ड्यूटी बदलें","del_duty_t":"यह ड्यूटी हटाएँ","no_duties":"अभी कोई ड्यूटी सेव नहीं है।","del_duty_q":"यह ड्यूटी हटाएँ?","del_duty_body":"यह ड्यूटी की एंट्री रजिस्टर से हटा दी जाएगी।","upd_duty_q":"यह ड्यूटी बदलें?","upd_duty_body":"इस ड्यूटी के बदलाव सेव करें?","name_empty":"नाम खाली नहीं हो सकता।","no_change":"सेव करने के लिए कोई बदलाव नहीं है।","name_exists":"यह नाम पहले से मौजूद है।","upd_name_q":"नाम बदलें?","upd_name_body":"“{old}” को “{new}” में बदलें? पुरानी ड्यूटी में भी नया नाम दिखेगा।","name_updated":"नाम बदल दिया गया।","moved_trash":"{name} को ट्रैश में डाल दिया गया।","name_clash_restore":"“{name}” नाम का कर्मचारी पहले से मौजूद है। पहले उसका नाम बदलें या उसे हटाएँ।","restore_q":"{name} को वापस लाएँ?","restore_body":"उसे {d} और {a} के साथ वापस जोड़ दिया जाएगा।","restore":"वापस लाएँ","restored":"{name} वापस आ गया।","purge_q":"{name} को हमेशा के लिए हटाएँ?","purge_body":"उसकी सभी ड्यूटी और एडवांस हमेशा के लिए हट जाएँगे। इसे वापस नहीं किया जा सकता।","delete_forever":"हमेशा के लिए हटाएँ","deleted_perm":"हमेशा के लिए हटा दिया गया।","trash_empty":"ट्रैश खाली है।","del_perm_t":"हमेशा के लिए हटाएँ","deleted_on":"{date} को हटाया गया","empty_trash_q":"ट्रैश खाली करें?","empty_trash_body":"ट्रैश में मौजूद सब कुछ हमेशा के लिए हट जाएगा। इसे वापस नहीं किया जा सकता।","trash_emptied":"ट्रैश खाली कर दिया गया।","duty_1":"{n} ड्यूटी","duty_n":"{n} ड्यूटी","adv_1":"{n} एडवांस","adv_n":"{n} एडवांस","no_emp":"अभी कोई कर्मचारी नहीं है।","upd_name":"नाम बदलें","del_emp":"कर्मचारी हटाएँ","move_trash_q":"{name} को ट्रैश में डालें?","move_trash_body":"इस कर्मचारी की सभी ड्यूटी और एडवांस सेटिंग्स के ट्रैश में चले जाएँगे। बाद में इन्हें वापस लाया जा सकता है।","move_trash":"ट्रैश में डालें","enter_name":"नाम लिखें।","added":"जोड़ दिया गया।","no_match":"ऐसा कोई कर्मचारी नहीं मिला","pdf_nolib":"PDF टूल लोड नहीं हो सका। इंटरनेट जाँचें और पेज दोबारा खोलें।","half_days":"आधे दिन","full_days":"पूरे दिन","advanced":"एडवांस","final_pay":"अंतिम भुगतान","fd_hd_count":"{fd} पूरा, {hd} आधा","gen_pdf":"PDF बनाएँ","no_duties_for":"{name} के लिए कोई ड्यूटी नहीं मिली।","dl_pdf":"PDF डाउनलोड करें","open_pdf":"PDF खोलें","share":"शेयर करें","pdf_ready":"PDF तैयार है। अगर डाउनलोड शुरू नहीं हुआ तो नीचे “PDF डाउनलोड करें” या “PDF खोलें” पर टैप करें।","pdf_fail":"अपने-आप डाउनलोड नहीं हुआ। नीचे “PDF डाउनलोड करें” या “PDF खोलें” पर टैप करें, या इस पेज को Chrome या Safari में खोलें।","pdf_saved":"PDF सेव हो गई।","dl_cancel":"डाउनलोड रद्द किया गया।","rates_invalid":"दोनों रेट के लिए सही राशि लिखें।","upd_rates_q":"रेट बदलें?","upd_rates_body":"पूरा दिन {full} और आधा दिन {half}। ये रेट सेव करें?","rates_updated":"रेट बदल दिए गए।","emp_details":"सभी कर्मचारियों का विवरण","pending":"बकाया राशि","emp_rate_hint":"दर खाली छोड़ने पर ‘रेट’ सेक्शन का सामान्य दर लागू होगा।","emp_updated":"कर्मचारी की जानकारी अपडेट हो गई।","upd_emp_rates_body":"“{name}” के लिए दर तय करें: पूरा दिन {full}, आधा दिन {half}? इस कर्मचारी का बिल इन्हीं दरों से बनेगा।","emp_working":"वर्तमान में कार्यरत कर्मचारी","new_entry":"नई प्रविष्टि","bill_adv":"दिया गया एडवांस","bill_net":"कुल बिल","final_bill":"अंतिम बिल"} };
+  var LANG_KEY = "dutylog.lang", lang = "en", memLang = null;
+  function loadLang() {
+    try { var v = localStorage.getItem(LANG_KEY); if (v && I18N[v]) lang = v; }
+    catch (e) { if (memLang) lang = memLang; }
+  }
+  function saveLang() { memLang = lang; try { localStorage.setItem(LANG_KEY, lang); } catch (e) {} }
+  function tx(key, v) {
+    var s = (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+    if (v) Object.keys(v).forEach(function (k) { s = s.split("{" + k + "}").join(v[k]); });
+    return s;
+  }
+  function txc(base, n) { return tx(base + (n === 1 ? "_1" : "_n"), { n: n }); }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var s = JSON.parse(raw); if (s && s.employees && s.records) { state = s; if (!state.advances) state.advances = []; if (!state.trash) state.trash = []; if (!state.pending) state.pending = {}; } }
+    } catch (e) { if (mem) state = mem; }
+  }
+  function persist() {
+    mem = state;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
+    catch (e) { return false; }
+  }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function say(el, text, err) { el.textContent = text; el.className = "msg" + (err ? " err" : ""); }
+
+  // In-page confirmation (browser confirm() is blocked on published pages)
+  var onYes = null;
+  function ask(title, text, label, fn, danger) {
+    $("mt").textContent = title; $("mb").textContent = text;
+    var y = $("myes"); y.textContent = label; y.className = "btn" + (danger ? " dangerfill" : "");
+    onYes = fn; $("modal").hidden = false; $("mno").focus();
+  }
+  function closeAsk() { $("modal").hidden = true; onYes = null; }
+  $("mno").onclick = closeAsk;
+  $("myes").onclick = function () { var f = onYes; closeAsk(); if (f) f(); };
+  $("modal").onclick = function (e) { if (e.target === $("modal")) closeAsk(); };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("modal").hidden) closeAsk(); });
+
+  // Tabs
+  function tab(which) {
+    ["duty", "set", "adv"].forEach(function (k) {
+      $("p-" + k).hidden = k !== which;
+      $("t-" + k).setAttribute("aria-selected", k === which);
+    });
+    if (which === "adv") { say($("advmsg"), ""); renderAdv(); }
+  }
+  $("t-duty").onclick = function () { tab("duty"); };
+  $("t-set").onclick = function () { tab("set"); };
+  $("t-adv").onclick = function () { tab("adv"); };
+
+  // Advanced: all employee names + advance amounts
+  function advTotal(id) {
+    return state.advances.filter(function (x) { return x.empId === id; }).reduce(function (t, x) { return t + x.amount; }, 0);
+  }
+  function renderAdv() {
+    var box = $("alist"); box.innerHTML = "";
+    $("acount").textContent = String(state.employees.length);
+    if (!state.employees.length) { box.innerHTML = '<p class="hint">' + tx("no_emp_adv") + '</p>'; return; }
+    state.employees.forEach(function (e, i) {
+      var row = document.createElement("button"); row.type = "button"; row.className = "arow"; row.setAttribute("data-id", e.id);
+      row.innerHTML = '<span class="num"></span><span class="avatar" aria-hidden="true"></span><span class="ename"></span><span class="atotal"></span>';
+      row.querySelector(".num").textContent = i + 1;
+      row.querySelector(".avatar").textContent = (graphemes(e.name)[0] || "?").toUpperCase();
+      row.querySelector(".ename").textContent = e.name;
+      var t = advTotal(e.id);
+      row.querySelector(".atotal").textContent = t > 0 ? tx("advance") + " " + money(t) : "";
+      row.onclick = function () { openAdvance(e); };
+      box.appendChild(row);
+    });
+  }
+  var advEmpId = null;
+  function openAdvance(emp) {
+    advEmpId = emp.id;
+    $("at").textContent = tx("advance_for", { name: emp.name });
+    $("adate").value = today(); $("aamt").value = ""; say($("amsg"), "", true);
+    renderAdvHist();
+    $("amodal").hidden = false; $("aamt").focus();
+  }
+  function closeAdvance() { $("amodal").hidden = true; advEmpId = null; }
+  function renderAdvHist() {
+    var box = $("ahist"); box.innerHTML = "";
+    var list = state.advances.filter(function (x) { return x.empId === advEmpId; })
+      .sort(function (p, q) { return p.date < q.date ? 1 : p.date > q.date ? -1 : 0; });
+    $("ahead").hidden = !list.length;
+    $("atot").textContent = list.length ? tx("total") + " " + money(advTotal(advEmpId)) : "";
+    list.forEach(function (a) {
+      var r = document.createElement("div"); r.className = "hrow";
+      r.innerHTML = '<span class="hd"></span><button class="ibtn del" type="button" title="' + tx("del_adv") + '" aria-label="' + tx("del_adv") + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>';
+      r.querySelector(".hd").textContent = fmt(a.date) + " — " + money(a.amount);
+      r.querySelector("button").onclick = function () {
+        ask(tx("del_adv_q"), tx("del_adv_body", { amt: money(a.amount), date: fmt(a.date) }), tx("delete"), function () {
+          state.advances = state.advances.filter(function (x) { return x.id !== a.id; });
+          persist(); renderAdvHist(); renderAdv(); renderBill();
+        }, true);
+      };
+      box.appendChild(r);
+    });
+  }
+  function saveAdvance() {
+    var emp = state.employees.filter(function (x) { return x.id === advEmpId; })[0];
+    if (!emp) return closeAdvance();
+    var date = $("adate").value, amt = Math.round(parseFloat($("aamt").value) * 100) / 100;
+    if (!date) return say($("amsg"), tx("choose_date"), true);
+    if (!(amt > 0)) return say($("amsg"), tx("enter_amount"), true);
+    state.advances.push({ id: uid(), empId: emp.id, date: date, amount: amt });
+    persist(); closeAdvance(); renderAdv(); renderBill();
+    say($("advmsg"), tx("adv_saved", { amt: money(amt), name: emp.name }));
+    flashRow("alist", emp.id);
+  }
+  // Glide to an employee's row (in the list with id boxId) and pulse it 3 times so it is clear the change was saved
+  function flashRow(boxId, id) {
+    setTimeout(function () {
+      var rows = $(boxId).children, row = null;
+      for (var i = 0; i < rows.length; i++) if (rows[i].getAttribute("data-id") === String(id)) row = rows[i];
+      if (!row) return;
+      var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      row.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "center" });
+      row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
+      setTimeout(function () { row.classList.remove("flash"); }, 2600);
+    }, 250);
+  }
+  $("acancel").onclick = closeAdvance;
+  $("asave").onclick = saveAdvance;
+  $("aamt").onkeydown = function (ev) { if (ev.key === "Enter") saveAdvance(); };
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && $("modal").hidden && !$("amodal").hidden) closeAdvance();
+  });
+
+  // Duty form
+  function renderWho() {
+    var box = $("who"); box.innerHTML = "";
+    $("nowho").hidden = state.employees.length > 0;
+    state.employees.forEach(function (e) {
+      var l = document.createElement("label"); l.className = "chk";
+      l.innerHTML = '<input type="checkbox" value="' + e.id + '"><span>' + esc(e.name) + "</span>";
+      box.appendChild(l);
+    });
+    updateSave();
+  }
+  function renderLocs() {
+    var seen = {}, html = "";
+    state.records.forEach(function (r) {
+      if (!seen[r.loc]) { seen[r.loc] = 1; html += '<option value="' + esc(r.loc).replace(/"/g, "&quot;") + '">'; }
+    });
+    $("locs").innerHTML = html;
+  }
+  function updateSave() {
+    var ok = $("date").value && $("loc").value.trim() && document.querySelectorAll("#who input:checked").length > 0;
+    $("save").disabled = !ok;
+  }
+  ["date", "loc"].forEach(function (id) {
+    $(id).addEventListener("input", updateSave);
+    $(id).addEventListener("change", updateSave);
+  });
+  $("who").addEventListener("change", updateSave);
+  $("save").onclick = function () {
+    var date = $("date").value, loc = $("loc").value.trim();
+    var duty = document.querySelector('input[name="duty"]:checked').value;
+    var ids = [].slice.call(document.querySelectorAll("#who input:checked")).map(function (c) { return c.value; });
+    if (!date) return say($("msg"), tx("choose_date"), true);
+    if (!loc) return say($("msg"), tx("enter_location"), true);
+    if (!ids.length) return say($("msg"), tx("select_emp"), true);
+    var names = ids.map(function (id) {
+      var e = state.employees.filter(function (x) { return x.id === id; })[0];
+      return e ? e.name : "";
+    }).filter(Boolean);
+    var clash = fullConflict(date, duty, names, null);
+    if (clash) return say($("msg"), tx("full_clash", { name: clash }), true);
+    var hclash = halfConflict(date, duty, names, null);
+    if (hclash) return say($("msg"), tx("half_clash", { name: hclash }), true);
+    var newId = uid();
+    state.records.push({ id: newId, date: date, loc: loc, duty: duty, names: names });
+    var ok = persist();
+    [].forEach.call(document.querySelectorAll("#who input"), function (c) { c.checked = false; });
+    updateSave();
+    say($("msg"), ok ? tx("saved") : tx("saved_blocked"), !ok);
+    renderLocs(); renderList();
+    highlight(newId);
+  };
+
+  // Records
+  function fmt(d) {
+    var p = d.split("-");
+    return (+p[2]) + "/" + (+p[1]) + "/" + p[0];
+  }
+  function renderList() {
+    var recs = state.records.slice();
+    var counts = {};
+    state.employees.forEach(function (e) { counts[e.name] = { Full: 0, Half: 0 }; });
+    recs.forEach(function (r) {
+      r.names.forEach(function (n) {
+        counts[n] = counts[n] || { Full: 0, Half: 0 }; counts[n][r.duty]++;
+      });
+    });
+    var keys = Object.keys(counts).sort();
+    $("sum").innerHTML = keys.length
+      ? '<div class="s2row s2head"><span>' + tx("employee") + '</span><span>' + tx("fd") + '</span><span>' + tx("hd") + '</span><span>' + tx("total") + '</span></div>' + keys.map(function (k) {
+          var f = counts[k].Full, h = counts[k].Half;
+          return '<div class="s2row"><span class="nm">' + esc(k) + '</span>' +
+            '<span class="c fd' + (f ? '' : ' zero') + '">' + f + '</span>' +
+            '<span class="c hd' + (h ? '' : ' zero') + '">' + h + '</span>' +
+            '<span class="c tot' + (f + h ? '' : ' zero') + '">' + (f + h) + '</span></div>';
+        }).join("")
+      : "";
+    $("list").innerHTML = recs.length
+      ? '<div class="tscroll"><table class="duties"><thead><tr><th>' + tx("date") + '</th><th>' + tx("location") + '</th><th>' + tx("employees") + '</th><th>' + tx("duty") + '</th><th><span class="sr">' + tx("actions") + '</span></th></tr></thead><tbody>' +
+        recs.map(function (r) {
+          return '<tr data-rid="' + r.id + '"><td><b>' + esc(fmt(r.date)) + '</b></td><td>' + esc(r.loc) + '</td>' +
+            '<td><ol class="names">' + r.names.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + '</ol></td>' +
+            '<td><span class="tag ' + r.duty + '" title="' + (r.duty === "Full" ? tx("full_day") : tx("half_day")) + '">' + (r.duty === "Full" ? tx("fd") : tx("hd")) + '</span></td>' +
+            '<td><div class="acts"><button class="ibtn" data-edit="' + r.id + '" type="button" title="' + tx("upd_duty_t") + '" aria-label="' + tx("upd_duty_t") + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="ibtn del" data-del="' + r.id + '" type="button" title="' + tx("del_duty_t") + '" aria-label="' + tx("del_duty_t") + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></td></tr>';
+        }).join("") + '</tbody></table></div>'
+      : '<p class="hint">' + tx("no_duties") + '</p>';
+    renderDetails();
+    renderBill();
+  }
+  // All employees details: per date + location, how many employees did Half / Full day, with totals
+  function renderDetails() {
+    var out = $("dout"); if (!out) return;
+    var groups = {}, order = [], fd = 0, hd = 0;
+    state.records.forEach(function (r) {
+      var key = r.date + "|" + String(r.loc).trim().toLowerCase();
+      if (!groups[key]) { groups[key] = { date: r.date, loc: String(r.loc).trim(), Half: 0, Full: 0 }; order.push(key); }
+      var n = r.names.length;
+      if (r.duty === "Full") { groups[key].Full += n; fd += n; } else { groups[key].Half += n; hd += n; }
+    });
+    detData = null;
+    if (!order.length) { out.innerHTML = '<p class="hint">' + esc(tx("no_duties")) + '</p>'; return; }
+    var list = order.map(function (k) { return groups[k]; }).sort(function (a, b) {
+      return a.date < b.date ? -1 : a.date > b.date ? 1 : a.loc.toLowerCase() < b.loc.toLowerCase() ? -1 : a.loc.toLowerCase() > b.loc.toLowerCase() ? 1 : 0;
+    });
+    detData = { rows: list, fd: fd, hd: hd };
+    var dash = function (v) { return v ? String(v) : "–"; };
+    var body = list.map(function (g) {
+      return '<tr><td><b>' + esc(fmt(g.date)) + '</b></td><td>' + esc(g.loc) + '</td>' +
+        '<td class="cnt">' + dash(g.Half) + '</td><td class="cnt">' + dash(g.Full) + '</td></tr>';
+    }).join("");
+    out.innerHTML = '<div class="tscroll"><table class="duties"><thead><tr><th>' + esc(tx("date")) + '</th><th>' + esc(tx("location")) +
+      '</th><th class="cnt">' + esc(tx("half_day")) + '</th><th class="cnt">' + esc(tx("full_day")) + '</th></tr></thead><tbody>' + body + '</tbody></table></div>' +
+      '<div class="dtot"><div><span>' + esc(tx("full_days")) + '</span><b>= ' + fd + '</b></div>' +
+      '<div><span>' + esc(tx("half_days")) + '</span><b>= ' + hd + '</b></div>' +
+      '<div class="dgrand"><span>' + esc(tx("total")) + '</span><b>' + (fd + hd) + '</b></div></div>' +
+      '<button class="btn save" id="dpdfbtn" type="button">' + esc(tx("dl_pdf")) + '</button><p class="msg" id="dmsg" aria-live="polite"></p><div class="pacts" id="dacts"></div>';
+    $("dpdfbtn").onclick = makeDetailsPdf;
+  }
+  var detData = null;
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { e.preventDefault(); });
+  });
+  document.addEventListener("touchmove", function (e) { if (e.touches && e.touches.length > 1 && e.cancelable) e.preventDefault(); }, { passive: false });
+  $("dtoggle").onclick = function () {
+    var willOpen = $("dbody").hidden;
+    $("dbody").hidden = !willOpen;
+    this.setAttribute("aria-expanded", String(willOpen));
+  };
+  $("list").onclick = function (ev) {
+    var eb = ev.target.closest ? ev.target.closest("[data-edit]") : null;
+    if (eb) return openEdit(eb.getAttribute("data-edit"));
+    var b = ev.target.closest ? ev.target.closest("[data-del]") : null;
+    var id = b && b.getAttribute("data-del");
+    if (!id) return;
+    ask(tx("del_duty_q"), tx("del_duty_body"), tx("delete"), function () {
+      state.records = state.records.filter(function (r) { return r.id !== id; });
+      persist(); renderLocs(); renderList();
+    }, true);
+  };
+  // Rules: one Full Day per employee per date, and no Half Day on a date where that employee already has a Full Day.
+  function halfConflict(date, duty, names, skipId) {
+    if (duty !== "Half") return null;
+    for (var i = 0; i < names.length; i++) {
+      var n = names[i];
+      var hit = state.records.some(function (r) {
+        return r.id !== skipId && r.date === date && r.duty === "Full" && r.names.indexOf(n) >= 0;
+      });
+      if (hit) return n;
+    }
+    return null;
+  }
+  function fullConflict(date, duty, names, skipId) {
+    if (duty !== "Full") return null;
+    for (var i = 0; i < names.length; i++) {
+      var n = names[i];
+      var hit = state.records.some(function (r) {
+        return r.id !== skipId && r.date === date && r.duty === "Full" && r.names.indexOf(n) >= 0;
+      });
+      if (hit) return n;
+    }
+    return null;
+  }
+
+  // Update a saved duty
+  var editId = null;
+  function openEdit(id) {
+    var r = state.records.filter(function (x) { return x.id === id; })[0];
+    if (!r) return;
+    editId = id;
+    $("edate").value = r.date; $("eloc").value = r.loc; $("emsg").textContent = "";
+    [].forEach.call(document.querySelectorAll('input[name="eduty"]'), function (i) { i.checked = i.value === r.duty; });
+    var names = state.employees.map(function (e) { return e.name; });
+    r.names.forEach(function (n) { if (names.indexOf(n) < 0) names.push(n); });
+    var box = $("ewho"); box.innerHTML = "";
+    names.forEach(function (n) {
+      var l = document.createElement("label"); l.className = "chk";
+      l.innerHTML = '<input type="checkbox"><span></span>';
+      var c = l.querySelector("input"); c.value = n; c.checked = r.names.indexOf(n) >= 0;
+      l.querySelector("span").textContent = n;
+      box.appendChild(l);
+    });
+    $("emodal").hidden = false; $("edate").focus();
+  }
+  function closeEdit() { $("emodal").hidden = true; editId = null; }
+  $("ecancel").onclick = closeEdit;
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && $("modal").hidden && !$("emodal").hidden) closeEdit();
+  });
+  $("esave").onclick = function () {
+    var date = $("edate").value, loc = $("eloc").value.trim();
+    var dt = document.querySelector('input[name="eduty"]:checked');
+    var names = [].slice.call(document.querySelectorAll("#ewho input:checked")).map(function (c) { return c.value; });
+    if (!date) return say($("emsg"), tx("choose_date"), true);
+    if (!loc) return say($("emsg"), tx("enter_location"), true);
+    if (!names.length) return say($("emsg"), tx("select_emp"), true);
+    var clash = fullConflict(date, dt ? dt.value : "", names, editId);
+    if (clash) return say($("emsg"), tx("full_clash", { name: clash }), true);
+    var hclash = halfConflict(date, dt ? dt.value : "", names, editId);
+    if (hclash) return say($("emsg"), tx("half_clash", { name: hclash }), true);
+    var id = editId;
+    ask(tx("upd_duty_q"), tx("upd_duty_body"), tx("update"), function () {
+      var r = state.records.filter(function (x) { return x.id === id; })[0];
+      if (!r) return closeEdit();
+      r.date = date; r.loc = loc; r.duty = dt ? dt.value : r.duty; r.names = names;
+      persist(); closeEdit(); renderLocs(); renderList(); highlight(id);
+    }, false);
+  };
+
+  function highlight(id) {
+    var row = document.querySelector('tr[data-rid="' + id + '"]');
+    if (!row) return;
+    var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "center" });
+    row.classList.add("hl");
+    setTimeout(function () { row.classList.remove("hl"); }, 2400);
+  }
+
+  // Update an employee's name (popup + confirmation)
+  var nameEditId = null;
+  function openNameEdit(emp) {
+    nameEditId = emp.id;
+    $("nname").value = emp.name; say($("nmsg"), "", true);
+    var er = emp.rates || {};
+    $("nfull").value = typeof er.Full === "number" ? er.Full : "";
+    $("nhalf").value = typeof er.Half === "number" ? er.Half : "";
+    $("nfull").placeholder = money(Number(state.rates.Full) || 0);
+    $("nhalf").placeholder = money(Number(state.rates.Half) || 0);
+    $("nmodal").hidden = false; $("nname").focus(); $("nname").select();
+  }
+  function closeNameEdit() { $("nmodal").hidden = true; nameEditId = null; }
+  function readRate(id) {
+    var v = $(id).value.trim();
+    if (v === "") return { ok: true, val: null };
+    var n = Number(v);
+    return (isNaN(n) || n < 0) ? { ok: false } : { ok: true, val: n };
+  }
+  function saveNameEdit() {
+    var emp = state.employees.filter(function (x) { return x.id === nameEditId; })[0];
+    if (!emp) return closeNameEdit();
+    var n = $("nname").value.trim(), old = emp.name;
+    if (!n) return say($("nmsg"), tx("name_empty"), true);
+    var rf = readRate("nfull"), rh = readRate("nhalf");
+    if (!rf.ok || !rh.ok) return say($("nmsg"), tx("rates_invalid"), true);
+    var nameChanged = n !== old;
+    if (nameChanged && dup(n, emp.id)) return say($("nmsg"), tx("name_exists"), true);
+    var cur = emp.rates || {};
+    var curF = typeof cur.Full === "number" ? cur.Full : null, curH = typeof cur.Half === "number" ? cur.Half : null;
+    var ratesChanged = curF !== rf.val || curH !== rh.val;
+    if (!nameChanged && !ratesChanged) return say($("nmsg"), tx("no_change"), true);
+    var apply = function () {
+      if (nameChanged) {
+        emp.name = n;
+        state.records.forEach(function (r) { r.names = r.names.map(function (x) { return x === old ? n : x; }); });
+      }
+      var nr = {};
+      if (rf.val !== null) nr.Full = rf.val;
+      if (rh.val !== null) nr.Half = rh.val;
+      if (nr.Full !== undefined || nr.Half !== undefined) emp.rates = nr; else delete emp.rates;
+      persist(); closeNameEdit(); say($("smsg"), tx("emp_updated"));
+      renderEmps(); renderWho(); renderList(); renderBill();
+      flashRow("emps", emp.id);
+    };
+    if (ratesChanged) {
+      var showF = rf.val !== null ? rf.val : (Number(state.rates.Full) || 0), showH = rh.val !== null ? rh.val : (Number(state.rates.Half) || 0);
+      ask(tx("upd_rates_q"), tx("upd_emp_rates_body", { name: n, full: money(showF), half: money(showH) }), tx("update"), apply, false);
+    } else {
+      ask(tx("upd_name_q"), tx("upd_name_body", { old: old, "new": n }), tx("update"), apply, false);
+    }
+  }
+  $("ncancel").onclick = closeNameEdit;
+  $("nsave").onclick = saveNameEdit;
+  ["nname", "nfull", "nhalf"].forEach(function (id) { $(id).onkeydown = function (ev) { if (ev.key === "Enter") saveNameEdit(); }; });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && $("modal").hidden && !$("nmodal").hidden) closeNameEdit();
+  });
+
+  // Trash: deleted employees keep all of their records here
+  function trashEmployee(e) {
+    var nm = e.name;
+    var recs = state.records.filter(function (r) { return r.names.indexOf(nm) >= 0; })
+      .map(function (r) { return { id: r.id, date: r.date, loc: r.loc, duty: r.duty }; });
+    var advs = state.advances.filter(function (a) { return a.empId === e.id; });
+    state.trash.push({ id: uid(), name: nm, empId: e.id, deletedAt: today(), records: recs, advances: advs, rates: e.rates });
+    state.employees = state.employees.filter(function (x) { return x.id !== e.id; });
+    state.records.forEach(function (r) { r.names = r.names.filter(function (x) { return x !== nm; }); });
+    state.records = state.records.filter(function (r) { return r.names.length > 0; });
+    state.advances = state.advances.filter(function (a) { return a.empId !== e.id; });
+    persist(); say($("smsg"), tx("moved_trash", { name: nm })); say($("tmsg"), "");
+    renderEmps(); renderWho(); renderLocs(); renderList(); renderTrash(); renderBill();
+  }
+    function restoreTrash(t) {
+    var clash = state.employees.some(function (x) { return x.name.toLowerCase() === t.name.toLowerCase(); });
+    if (clash) return say($("tmsg"), tx("name_clash_restore", { name: t.name }), true);
+    ask(tx("restore_q", { name: t.name }), tx("restore_body", { d: txc("duty", t.records.length), a: txc("adv", t.advances.length) }), tx("restore"), function () {
+      var id = state.employees.some(function (x) { return x.id === t.empId; }) ? uid() : t.empId;
+      state.employees.push(t.rates ? { id: id, name: t.name, rates: t.rates } : { id: id, name: t.name });
+      t.records.forEach(function (tr) {
+        var ex = state.records.filter(function (r) { return r.id === tr.id; })[0];
+        if (ex) { if (ex.names.indexOf(t.name) < 0) ex.names.push(t.name); }
+        else state.records.push({ id: tr.id, date: tr.date, loc: tr.loc, duty: tr.duty, names: [t.name] });
+      });
+      t.advances.forEach(function (a) { a.empId = id; state.advances.push(a); });
+      state.trash = state.trash.filter(function (x) { return x.id !== t.id; });
+      persist(); say($("tmsg"), tx("restored", { name: t.name }));
+      renderEmps(); renderWho(); renderLocs(); renderList(); renderTrash(); renderBill();
+    }, false);
+  }
+  function purgeTrash(t) {
+    ask(tx("purge_q", { name: t.name }), tx("purge_body"), tx("delete_forever"), function () {
+      state.trash = state.trash.filter(function (x) { return x.id !== t.id; });
+      persist(); say($("tmsg"), tx("deleted_perm")); renderTrash();
+    }, true);
+  }
+  function renderTrash() {
+    var box = $("tlist"); box.innerHTML = "";
+    $("tcount").textContent = state.trash.length ? String(state.trash.length) : "";
+    $("tempty").hidden = !state.trash.length;
+    if (!state.trash.length) { box.innerHTML = '<p class="hint" style="margin:0">' + tx("trash_empty") + '</p>'; return; }
+    state.trash.slice().reverse().forEach(function (t) {
+      var row = document.createElement("div"); row.className = "trow";
+      row.innerHTML = '<span class="avatar" aria-hidden="true"></span><div class="tinfo"><div class="tname"></div><div class="tmeta"></div></div>' +
+        '<button class="btn ghost" type="button">' + tx("restore") + '</button>' +
+        '<button class="ibtn del" type="button" title="' + tx("del_perm_t") + '" aria-label="' + tx("del_perm_t") + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>';
+      row.querySelector(".avatar").textContent = (graphemes(t.name)[0] || "?").toUpperCase();
+      row.querySelector(".tname").textContent = t.name;
+      row.querySelector(".tmeta").textContent = txc("duty", t.records.length) + " · " + txc("adv", t.advances.length) + " · " + tx("deleted_on", { date: fmt(t.deletedAt) });
+      var bs = row.querySelectorAll("button");
+      bs[0].onclick = function () { restoreTrash(t); };
+      bs[1].onclick = function () { purgeTrash(t); };
+      box.appendChild(row);
+    });
+  }
+  $("tempty").onclick = function () {
+    ask(tx("empty_trash_q"), tx("empty_trash_body"), tx("empty_trash"), function () {
+      state.trash = []; persist(); say($("tmsg"), tx("trash_emptied")); renderTrash();
+    }, true);
+  };
+
+  // Settings
+  function renderEmps() {
+    var box = $("emps"); box.innerHTML = "";
+    if (!state.employees.length) box.innerHTML = '<p class="hint">' + tx("no_emp") + '</p>';
+    state.employees.forEach(function (e) {
+      var row = document.createElement("div"); row.className = "row erow"; row.setAttribute("data-id", e.id);
+      row.innerHTML = '<span class="avatar" aria-hidden="true"></span><span class="ename"></span>' +
+        '<button class="ibtn" type="button" title="' + tx("upd_name") + '" aria-label="' + tx("upd_name") + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>' +
+        '<button class="ibtn del" type="button" title="' + tx("del_emp") + '" aria-label="' + tx("del_emp") + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>';
+      row.querySelector(".ename").textContent = e.name;
+      row.querySelector(".avatar").textContent = (graphemes(e.name)[0] || "?").toUpperCase();
+      var b = row.querySelectorAll("button");
+      b[0].onclick = function () { openNameEdit(e); };
+      b[1].onclick = function () {
+        ask(tx("move_trash_q", { name: e.name }), tx("move_trash_body"), tx("move_trash"), function () {
+          trashEmployee(e);
+        }, true);
+      };
+      box.appendChild(row);
+    });
+  }
+  function dup(name, skip) {
+    return state.employees.some(function (x) { return x.id !== skip && x.name.toLowerCase() === name.toLowerCase(); });
+  }
+  function addEmp() {
+    var n = $("newname").value.trim();
+    if (!n) return say($("smsg"), tx("enter_name"), true);
+    if (dup(n)) return say($("smsg"), tx("name_exists"), true);
+    var emp = { id: uid(), name: n };
+    state.employees.push(emp);
+    persist(); $("newname").value = ""; say($("smsg"), tx("added"));
+    renderEmps(); renderWho();
+    $("newname").blur();
+    flashRow("emps", emp.id);
+  }
+  $("add").onclick = addEmp;
+  $("newname").onkeydown = function (e) { if (e.key === "Enter") addEmp(); };
+
+  // Bill
+  var billName = null, acIdx = -1;
+  var pendAmt = 0; // pending payment typed in the bill: only for the bill on screen, starts at 0 each time an employee is chosen
+  function allNames() {
+    var seen = {}, out = [];
+    state.employees.forEach(function (e) { if (!seen[e.name]) { seen[e.name] = 1; out.push(e.name); } });
+    state.records.forEach(function (r) { r.names.forEach(function (n) { if (!seen[n]) { seen[n] = 1; out.push(n); } }); });
+    return out;
+  }
+  function money(n) { return tx("rs") + Number(n).toLocaleString("en-IN"); }
+  function moneyS(n) { return n < 0 ? "-" + money(-n) : money(n); }
+  function setActive(items, i) {
+    [].forEach.call(items, function (li, k) { li.setAttribute("aria-selected", k === i ? "true" : "false"); });
+    acIdx = i;
+    if (items[i]) items[i].scrollIntoView({ block: "nearest" });
+  }
+  function showList() {
+    var q = $("bname").value.trim().toLowerCase();
+    var names = allNames().filter(function (n) { return n.toLowerCase().indexOf(q) >= 0; })
+      .sort(function (a, b) {
+        var sa = a.toLowerCase().indexOf(q) === 0 ? 0 : 1, sb = b.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+        return sa - sb || a.localeCompare(b);
+      });
+    var ul = $("blist"); ul.innerHTML = ""; acIdx = -1;
+    if (!names.length) {
+      var none = document.createElement("li"); none.className = "none"; none.textContent = tx("no_match"); ul.appendChild(none);
+    }
+    names.forEach(function (n) {
+      var li = document.createElement("li"); li.setAttribute("role", "option"); li.textContent = n;
+      li.onmousedown = function (e) { e.preventDefault(); };
+      li.onclick = function () { pick(n); };
+      ul.appendChild(li);
+    });
+    ul.hidden = false; $("bname").setAttribute("aria-expanded", "true");
+  }
+  function hideList() { $("blist").hidden = true; $("bname").setAttribute("aria-expanded", "false"); acIdx = -1; }
+  function pick(n) { $("bname").value = n; billName = n; pendAmt = 0; hideList(); $("bname").blur(); renderBill(); scrollToBill(); }
+  // After choosing a name, glide down to that employee's table (wait a moment for the mobile keyboard to close)
+  function scrollToBill() {
+    setTimeout(function () {
+      var el = $("bout");
+      if (!el || !el.firstChild) return;
+      var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
+    }, 220);
+  }
+  $("bname").addEventListener("input", function () { billName = null; pendAmt = 0; $("bout").innerHTML = ""; showList(); });
+  $("bname").addEventListener("focus", showList);
+  $("bname").addEventListener("blur", function () { setTimeout(hideList, 150); });
+  $("bname").addEventListener("keydown", function (e) {
+    var items = $("blist").querySelectorAll("li[role=option]");
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if ($("blist").hidden) { showList(); items = $("blist").querySelectorAll("li[role=option]"); }
+      if (!items.length) return;
+      var d = e.key === "ArrowDown" ? 1 : -1;
+      setActive(items, acIdx < 0 ? (d > 0 ? 0 : items.length - 1) : (acIdx + d + items.length) % items.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (acIdx >= 0 && items[acIdx]) return pick(items[acIdx].textContent);
+      if (items.length === 1) return pick(items[0].textContent);
+      var q = this.value.trim().toLowerCase();
+      var ex = allNames().filter(function (n) { return n.toLowerCase() === q; })[0];
+      if (ex) pick(ex);
+    } else if (e.key === "Escape") { hideList(); }
+  });
+  // jsPDF's built-in fonts can't show Marathi/Hindi (Devanagari). So text with such
+  // characters is drawn by the browser onto a canvas (correct shaping) and placed in the PDF as an image.
+  var NONLATIN = /[^\u0000-\u00FF]/;
+  var FONT_FAMILY = '"Noto Sans Devanagari","Nirmala UI","Mangal","Kohinoor Devanagari","Devanagari Sangam MN","Lohit Devanagari","Noto Sans",Arial,sans-serif';
+  function graphemes(str) {
+    if (window.Intl && Intl.Segmenter) {
+      try {
+        return Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(str), function (x) { return x.segment; });
+      } catch (e) {}
+    }
+    return Array.from(str);
+  }
+  function textBlock(text, wMm, pt, bold, color, lineMm) {
+    var PX = 12; // canvas pixels per mm
+    var font = (bold ? "bold " : "") + (pt * 0.3528 * PX) + "px " + FONT_FAMILY;
+    var mctx = document.createElement("canvas").getContext("2d");
+    mctx.font = font;
+    var maxW = wMm * PX, lines = [], cur = "";
+    String(text).split(/\s+/).filter(Boolean).forEach(function (w) {
+      var t = cur ? cur + " " + w : w;
+      if (mctx.measureText(t).width <= maxW) { cur = t; return; }
+      if (cur) { lines.push(cur); cur = ""; }
+      if (mctx.measureText(w).width <= maxW) { cur = w; return; }
+      graphemes(w).forEach(function (g) {
+        var t2 = cur + g;
+        if (cur && mctx.measureText(t2).width > maxW) { lines.push(cur); cur = g; } else { cur = t2; }
+      });
+    });
+    if (cur) lines.push(cur);
+    if (!lines.length) lines = [""];
+    var widest = 0;
+    lines.forEach(function (l) { widest = Math.max(widest, mctx.measureText(l).width); });
+    var lh = lineMm * PX;
+    var cv = document.createElement("canvas");
+    cv.width = Math.ceil(Math.min(maxW, widest)) + 4;
+    cv.height = Math.ceil(lines.length * lh);
+    var ctx = cv.getContext("2d");
+    ctx.font = font; ctx.fillStyle = color; ctx.textBaseline = "alphabetic";
+    lines.forEach(function (l, i) { ctx.fillText(l, 0, i * lh + lh * 0.72); });
+    return { url: cv.toDataURL("image/png"), n: lines.length, w: cv.width / PX, h: cv.height / PX };
+  }
+  // Draw PDF text: normal PDF text for English, canvas image for Marathi/Hindi (needs correct shaping)
+  function put(doc, str, x, y, o) {
+    o = o || {};
+    var size = o.size || 10, color = o.color || "#000000";
+    if (NONLATIN.test(str)) {
+      var lineMm = size * 0.3528 * 1.6;
+      var blk = textBlock(str, 170, size, !!o.bold, color, lineMm);
+      var px = o.align === "center" ? x - blk.w / 2 : o.align === "right" ? x - blk.w : x;
+      doc.addImage(blk.url, "PNG", px, y - lineMm * 0.72, blk.w, blk.h, undefined, "FAST");
+    } else {
+      doc.setFont("helvetica", o.bold ? "bold" : "normal"); doc.setFontSize(size);
+      doc.setTextColor(parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16));
+      if (o.align) doc.text(str, x, y, { align: o.align }); else doc.text(str, x, y);
+    }
+  }
+  var billData = null;
+  function makePdf() {
+    var b = billData, msg = $("pmsg");
+    if (!b) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) return say(msg, tx("pdf_nolib"), true);
+    var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+    doc.setLineHeightFactor(1.35);
+    var W = 210, H = 297, M = 15, tw = W - 2 * M;
+    var cols = [{ t: tx("date"), w: 30 }, { t: tx("location"), w: 90 }, { t: tx("half_day"), w: 30 }, { t: tx("full_day"), w: 30 }];
+    var y = 22;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(20, 35, 46);
+    if (NONLATIN.test(b.name)) {
+      var tb = textBlock(b.name, tw, 18, true, "#14232e", 8);
+      doc.addImage(tb.url, "PNG", W / 2 - tb.w / 2, y - 5.8, tb.w, tb.h, undefined, "FAST");
+      y = Math.max(y + 10, y - 5.8 + tb.h + 4);
+    } else {
+      doc.text(b.name, W / 2, y, { align: "center" });
+      y += 10;
+    }
+    function head() {
+      var x = M;
+      doc.setFillColor(26, 127, 86); doc.rect(M, y, tw, 9, "F");
+      cols.forEach(function (c, i) {
+        if (i < 2) put(doc, c.t, x + 2, y + 6, { size: 10, bold: true, color: "#ffffff" });
+        else put(doc, c.t, x + c.w / 2, y + 6, { size: 10, bold: true, color: "#ffffff", align: "center" });
+        x += c.w;
+      });
+      y += 9;
+      doc.setFont("helvetica", "normal"); doc.setTextColor(30, 30, 30); doc.setDrawColor(170, 180, 175);
+    }
+    head();
+    b.rows.forEach(function (r) {
+      var blk = NONLATIN.test(r.loc) ? textBlock(r.loc, cols[1].w - 4, 10, false, "#1e1e1e", 5) : null;
+      var lines = blk ? null : doc.splitTextToSize(r.loc, cols[1].w - 4);
+      var h = Math.max(8, (blk ? blk.n : lines.length) * 5 + 3.5);
+      if (y + h > H - 20) { doc.addPage(); y = 20; head(); }
+      var x = M;
+      cols.forEach(function (c, i) { doc.rect(x, y, c.w, h); x += c.w; });
+      doc.setFontSize(10);
+      doc.text(fmt(r.date), M + 2, y + 5.5);
+      if (blk) doc.addImage(blk.url, "PNG", M + cols[0].w + 2, y + 2, blk.w, blk.h, undefined, "FAST");
+      else doc.text(lines, M + cols[0].w + 2, y + 5.5);
+      if (r.duty === "Half") doc.text("1", M + cols[0].w + cols[1].w + cols[2].w / 2, y + 5.5, { align: "center" });
+      if (r.duty === "Full") doc.text("1", M + cols[0].w + cols[1].w + cols[2].w + cols[3].w / 2, y + 5.5, { align: "center" });
+      y += h;
+    });
+    y += 8;
+    var gross = b.hAmt + b.fAmt;
+    var items = [[tx("half_days"), b.hd + " \u00d7 " + money(b.rh) + " = " + money(b.hAmt)],
+                 [tx("full_days"), b.fd + " \u00d7 " + money(b.rf) + " = " + money(b.fAmt)]];
+    items.push([tx("total"), money(b.hAmt) + " + " + money(b.fAmt) + " = " + money(gross)]);
+    items.push([tx("bill_adv"), "- " + money(b.adv)]);
+    items.push([tx("bill_net"), money(gross) + " - " + money(b.adv) + " = " + moneyS(b.sub)]);
+    if (b.pend) {
+      items.push([tx("pending"), money(b.pend)]);
+      items.push([tx("final_bill"), grandText(b.sub, b.pend, b.net)]);
+    }
+    var bh = items.length * 13 + 7;
+    if (y + bh + 24 > H - 15) { doc.addPage(); y = 20; }
+    doc.setDrawColor(170, 180, 175); doc.roundedRect(M, y, tw, bh, 2, 2, "S");
+    var ty = y + 9;
+    items.forEach(function (p) {
+      put(doc, p[0], M + 5, ty, { size: 11, bold: true, color: "#14232e" });
+      put(doc, p[1], M + 5, ty + 6, { size: 10.5, color: "#46504c" });
+      ty += 13;
+    });
+    y += bh + 6;
+    doc.setFillColor(26, 127, 86); doc.roundedRect(M, y, tw, 12, 2, 2, "F");
+    put(doc, tx("final_pay"), M + 5, y + 8, { size: 12, bold: true, color: "#ffffff" });
+    put(doc, moneyS(b.net), M + tw - 5, y + 8, { size: 12, bold: true, color: "#ffffff", align: "right" });
+    var buf = doc.output("arraybuffer");
+    var fname = (b.name.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "Duty-Log") + "-bill.pdf";
+    showPdfActions(fname, buf);
+    saveFile(doc, fname, buf, msg);
+  }
+  function makeDetailsPdf() {
+    var d = detData, msg = $("dmsg");
+    if (!d) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) return say(msg, tx("pdf_nolib"), true);
+    var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+    doc.setLineHeightFactor(1.35);
+    var W = 210, H = 297, M = 15, tw = W - 2 * M;
+    var cols = [{ t: tx("date"), w: 30 }, { t: tx("location"), w: 90 }, { t: tx("half_day"), w: 30 }, { t: tx("full_day"), w: 30 }];
+    var y = 22;
+    put(doc, tx("emp_details"), W / 2, y, { size: 18, bold: true, color: "#14232e", align: "center" });
+    y += 10;
+    function head() {
+      var x = M;
+      doc.setFillColor(26, 127, 86); doc.rect(M, y, tw, 9, "F");
+      cols.forEach(function (c, i) {
+        if (i < 2) put(doc, c.t, x + 2, y + 6, { size: 10, bold: true, color: "#ffffff" });
+        else put(doc, c.t, x + c.w / 2, y + 6, { size: 10, bold: true, color: "#ffffff", align: "center" });
+        x += c.w;
+      });
+      y += 9;
+      doc.setFont("helvetica", "normal"); doc.setTextColor(30, 30, 30); doc.setDrawColor(170, 180, 175);
+    }
+    head();
+    d.rows.forEach(function (r) {
+      var blk = NONLATIN.test(r.loc) ? textBlock(r.loc, cols[1].w - 4, 10, false, "#1e1e1e", 5) : null;
+      var lines = blk ? null : doc.splitTextToSize(r.loc, cols[1].w - 4);
+      var h = Math.max(8, (blk ? blk.n : lines.length) * 5 + 3.5);
+      if (y + h > H - 20) { doc.addPage(); y = 20; head(); }
+      var x = M;
+      cols.forEach(function (c) { doc.rect(x, y, c.w, h); x += c.w; });
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(30, 30, 30);
+      doc.text(fmt(r.date), M + 2, y + 5.5);
+      if (blk) doc.addImage(blk.url, "PNG", M + cols[0].w + 2, y + 2, blk.w, blk.h, undefined, "FAST");
+      else doc.text(lines, M + cols[0].w + 2, y + 5.5);
+      doc.text(r.Half ? String(r.Half) : "-", M + cols[0].w + cols[1].w + cols[2].w / 2, y + 5.5, { align: "center" });
+      doc.text(r.Full ? String(r.Full) : "-", M + cols[0].w + cols[1].w + cols[2].w + cols[3].w / 2, y + 5.5, { align: "center" });
+      y += h;
+    });
+    y += 8;
+    var bh = 2 * 13 + 7;
+    if (y + bh + 18 > H - 15) { doc.addPage(); y = 20; }
+    doc.setDrawColor(170, 180, 175); doc.roundedRect(M, y, tw, bh, 2, 2, "S");
+    var ty = y + 9;
+    [[tx("full_days"), "= " + d.fd], [tx("half_days"), "= " + d.hd]].forEach(function (p) {
+      put(doc, p[0], M + 5, ty, { size: 11, bold: true, color: "#14232e" });
+      put(doc, p[1], M + tw - 5, ty, { size: 11, bold: true, color: "#14232e", align: "right" });
+      ty += 13;
+    });
+    y += bh + 6;
+    doc.setFillColor(26, 127, 86); doc.roundedRect(M, y, tw, 12, 2, 2, "F");
+    put(doc, tx("total"), M + 5, y + 8, { size: 12, bold: true, color: "#ffffff" });
+    put(doc, String(d.fd + d.hd), M + tw - 5, y + 8, { size: 12, bold: true, color: "#ffffff", align: "right" });
+    var buf = doc.output("arraybuffer");
+    var fname = "All-Employees-Details.pdf";
+    showPdfActions(fname, buf, "dacts");
+    saveFile(doc, fname, buf, msg);
+  }
+  var pdfUrl = null;
+  function showPdfActions(fname, buf, boxId) {
+    var box = $(boxId || "pacts"); if (!box) return;
+    box.innerHTML = "";
+    try {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+      var blob = new Blob([buf], { type: "application/pdf" });
+      pdfUrl = URL.createObjectURL(blob);
+      var a1 = document.createElement("a"); a1.className = "btn"; a1.href = pdfUrl; a1.download = fname; a1.textContent = tx("dl_pdf");
+      var a2 = document.createElement("a"); a2.className = "btn ghost"; a2.href = pdfUrl; a2.target = "_blank"; a2.rel = "noopener"; a2.textContent = tx("open_pdf");
+      box.appendChild(a1); box.appendChild(a2);
+      var file = new File([blob], fname, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        var b3 = document.createElement("button"); b3.type = "button"; b3.className = "btn ghost"; b3.textContent = tx("share");
+        b3.onclick = function () { navigator.share({ files: [file], title: fname }).catch(function () {}); };
+        box.appendChild(b3);
+      }
+    } catch (e) {}
+  }
+  function browserSave(doc, fname, msg) {
+    try {
+      doc.save(fname);
+      say(msg, tx("pdf_ready"));
+    } catch (e) {
+      try {
+        var url = URL.createObjectURL(doc.output("blob"));
+        var a = document.createElement("a");
+        a.href = url; a.download = fname;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        say(msg, tx("pdf_ready"));
+      } catch (e2) {
+        say(msg, tx("pdf_fail"), true);
+      }
+    }
+  }
+  function saveFile(doc, fname, buf, msg) {
+    if (typeof claude !== "undefined" && claude && claude.use) {
+      claude.use("downloads").then(function (d) {
+        if (!d) return browserSave(doc, fname, msg);
+        return d.save({ filename: fname, data: buf }).then(function () { say(msg, tx("pdf_saved")); });
+      }).catch(function (err) {
+        if (err && err.code === "declined") say(msg, tx("dl_cancel"));
+        else browserSave(doc, fname, msg);
+      });
+      return;
+    }
+    browserSave(doc, fname, msg);
+  }
+  function renderBill() {
+    var out = $("bout");
+    if (!billName) { out.innerHTML = ""; return; }
+    if (allNames().indexOf(billName) < 0) { billName = null; $("bname").value = ""; out.innerHTML = ""; return; }
+    var rows = state.records.filter(function (r) { return r.names.indexOf(billName) >= 0; })
+      .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    if (!rows.length) { out.innerHTML = '<p class="hint">' + esc(tx("no_duties_for", { name: billName })) + '</p>'; return; }
+    var emp0 = state.employees.filter(function (x) { return x.name === billName; })[0];
+    var total = 0, fd = 0, hd = 0;
+    var body = rows.map(function (r) {
+      var amt = rateOf(emp0, r.duty);
+      total += amt; if (r.duty === "Full") fd++; else hd++;
+      return '<tr><td><b>' + esc(fmt(r.date)) + '</b></td><td>' + esc(r.loc) + '</td>' +
+        '<td class="cnt">' + (r.duty === "Half" ? "1" : "") + '</td>' +
+        '<td class="cnt">' + (r.duty === "Full" ? "1" : "") + '</td></tr>';
+    }).join("");
+    var rh = rateOf(emp0, "Half"), rf = rateOf(emp0, "Full");
+    var hAmt = hd * rh, fAmt = fd * rf;
+    var emp = state.employees.filter(function (x) { return x.name === billName; })[0];
+    var pend = pendAmt;
+    var adv = emp ? advTotal(emp.id) : 0, gross = hAmt + fAmt, sub = gross - adv, net = sub + pend;
+    billData = { name: billName, rows: rows, hd: hd, fd: fd, rh: rh, rf: rf, hAmt: hAmt, fAmt: fAmt, adv: adv, sub: sub, pend: pend, net: net };
+    var summary = '<div class="bsum">' +
+      brow(tx("half_days"), '<b>' + hd + ' × ' + money(rh) + ' = ' + money(hAmt) + '</b>') +
+      brow(tx("full_days"), '<b>' + fd + ' × ' + money(rf) + ' = ' + money(fAmt) + '</b>') +
+      brow(tx("total"), '<span class="eq">' + money(hAmt) + ' + ' + money(fAmt) + ' = </span><b>' + money(gross) + '</b>') +
+      brow(tx("bill_adv"), '<b>- ' + money(adv) + '</b>') +
+      brow(tx("bill_net"), '<span class="eq">' + money(gross) + ' - ' + money(adv) + ' = </span><b>' + moneyS(sub) + '</b>') +
+      '<div class="brow"><label class="bl" for="pend">' + esc(tx("pending")) + '</label><span class="bv"><input type="number" id="pend" class="pendin" min="0" step="any" inputmode="decimal" placeholder="' + esc(money(0)) + '" value="' + (pend || "") + '"></span></div>' +
+      brow(tx("final_bill"), grandHtml(sub, pend, net), "btotal") + '</div>';
+    out.innerHTML = '<p class="bname">' + esc(billName) + '</p>' +
+      '<div class="tscroll"><table class="duties"><thead><tr><th>' + tx("date") + '</th><th>' + tx("location") + '</th><th class="cnt">' + tx("hd") + '</th><th class="cnt">' + tx("fd") + '</th></tr></thead><tbody>' + body + '</tbody></table></div>' + summary +
+      '<div class="final"><span>' + tx("final_pay") + '<br><small>' + tx("fd_hd_count", { fd: fd, hd: hd }) + '</small></span><span class="tot" id="bfinal">' + moneyS(net) + '</span></div>' +
+      '<button class="btn save" id="pdfbtn" type="button">' + tx("gen_pdf") + '</button><p class="msg" id="pmsg" aria-live="polite"></p><div class="pacts" id="pacts"></div>';
+    $("pdfbtn").onclick = makePdf;
+    // Pending payment: add to the bill, remember it for this employee, update totals without redrawing (keeps typing focus)
+    $("pend").oninput = function () {
+      var v = Number(this.value);
+      if (isNaN(v) || v < 0) v = 0;
+      pendAmt = v;
+      var n2 = sub + v;
+      billData.pend = v; billData.net = n2;
+      $("btotal").innerHTML = grandHtml(sub, v, n2);
+      $("bfinal").textContent = moneyS(n2);
+    };
+  }
+  function brow(label, valueHtml, id) {
+    return '<div class="brow"><span class="bl">' + label + '</span><span class="bv"' + (id ? ' id="' + id + '"' : '') + '>' + valueHtml + '</span></div>';
+  }
+  function grandHtml(sub, pend, net) {
+    return pend ? '<span class="eq">' + moneyS(sub) + ' + ' + money(pend) + ' = </span><b>' + moneyS(net) + '</b>' : '<b>' + moneyS(net) + '</b>';
+  }
+  function grandText(sub, pend, net) {
+    return pend ? moneyS(sub) + " + " + money(pend) + " = " + moneyS(net) : moneyS(net);
+  }
+
+  // Rates
+  // An employee's own rate (set in the pencil popup) wins; otherwise the default from the Rates section
+  function rateOf(emp, type) {
+    if (emp && emp.rates && typeof emp.rates[type] === "number") return emp.rates[type];
+    return Number(state.rates[type]) || 0;
+  }
+  function renderRates() { $("rfull").value = state.rates.Full; $("rhalf").value = state.rates.Half; }
+  $("rsave").onclick = function () {
+    var f = $("rfull").value.trim(), h = $("rhalf").value.trim();
+    var fn = Number(f), hn = Number(h);
+    if (f === "" || h === "" || isNaN(fn) || isNaN(hn) || fn < 0 || hn < 0) return say($("rmsg"), tx("rates_invalid"), true);
+    if (fn === state.rates.Full && hn === state.rates.Half) return say($("rmsg"), tx("no_change"), true);
+    ask(tx("upd_rates_q"), tx("upd_rates_body", { full: money(fn), half: money(hn) }), tx("update"), function () {
+      state.rates = { Full: fn, Half: hn };
+      persist(); say($("rmsg"), tx("rates_updated")); renderRates(); renderBill();
+    }, false);
+  };
+
+  // Language switching
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.title = tx("title");
+    [].forEach.call(document.querySelectorAll("[data-i18n]"), function (el) { el.textContent = tx(el.getAttribute("data-i18n")); });
+    [].forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (el) { el.placeholder = tx(el.getAttribute("data-i18n-ph")); });
+    [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (el) { el.setAttribute("aria-label", tx(el.getAttribute("data-i18n-aria"))); });
+    [].forEach.call(document.querySelectorAll('input[name="lang"]'), function (r) { r.checked = r.value === lang; });
+  }
+  function setLang(l) {
+    if (!I18N[l] || l === lang) return;
+    lang = l; saveLang(); applyStatic();
+    ["msg", "rmsg", "smsg", "tmsg", "advmsg"].forEach(function (id) { say($(id), ""); });
+    renderList(); renderAdv(); renderEmps(); renderTrash();
+  }
+  [].forEach.call(document.querySelectorAll('input[name="lang"]'), function (r) {
+    r.addEventListener("change", function () { if (r.checked) setLang(r.value); });
+  });
+
+  // Init
+  load();
+  loadLang(); applyStatic();
+  if (!state.rates) state.rates = { Full: 800, Half: 500 };
+  renderRates();
+  $("date").value = today();
+  renderWho(); renderLocs(); renderEmps(); renderList(); renderTrash();
+  if (!state.employees.length) tab("set");
+})();
+</script>
+</body>
+</html>
